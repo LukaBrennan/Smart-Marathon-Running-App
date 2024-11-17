@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+<<<<<<< HEAD
+=======
+    <!-- Permission to access the internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+>>>>>>> b9f76f7 (Creating the authorization to allow Strava use the app)
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,6 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartMarathonRunningApp"
         tools:targetApi="31">
+<<<<<<< HEAD
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -24,3 +31,24 @@
     </application>
 
 </manifest>
+=======
+
+        <activity android:name=".TrainingPlan" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Handling the OAuth redirect -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="smartmarathon" android:host="register" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
+>>>>>>> b9f76f7 (Creating the authorization to allow Strava use the app)
