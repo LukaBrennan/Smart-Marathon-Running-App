@@ -1,50 +1,46 @@
 package com.example.smartmarathonrunningapp;
+
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-// Main activity that serves as the entry point of the app
+
 public class MainActivity extends AppCompatActivity {
-    private MyAdapter adapter; // Adapter for the RecyclerView
     private StravaRepository stravaRepository; // Repository for Strava API interactions
+    private TextView activityTextView; // TextView to display the latest activity stats
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main); // Set the activity's layout
 
-        // Initialize RecyclerView and set its layout manager
-        // UI component to display list of activities
-        RecyclerView recyclerView = findViewById(R.id.recyclerView); // Replace with the actual RecyclerView ID
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Initialize TextView
+        activityTextView = findViewById(R.id.activityTextView);
 
-        // Initialize the RecyclerView adapter
-        adapter = new MyAdapter(); // Adapter starts with an empty list
-        recyclerView.setAdapter(adapter); // Attach adapter to RecyclerView
+        // Initialize StravaRepository
+        stravaRepository = new StravaRepository();
 
-        // Initialize StravaRepository for API interactions
-        stravaRepository = new StravaRepository(this);
-
-        // Fetch and display activities from the API
-        fetchActivities();
+        // Fetch and display the latest activity
+        fetchLatestActivity();
     }
 
-    // Fetches activities using the repository and updates the UI
-    private void fetchActivities() {
-        stravaRepository.fetchActivities(1, 30, new Callback<List<Activity>>() {
+    // Fetches the latest activity using the repository
+    private void fetchLatestActivity() {
+        String accessToken = "cee39cc9d13b2afa4c36ad12772d0876723149a9"; // Replace with a dynamically retrieved token
+        stravaRepository.fetchActivities(accessToken, 1, 1, new Callback<List<Activity>>() {
             @Override
             public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
-                // If the API response is successful, update the RecyclerView with new data
-                if (response.isSuccessful() && response.body() != null) {
-                    adapter.updateData(response.body());
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    Activity lastActivity = response.body().get(0); // Get the latest activity
+                    displayLastRunStats(lastActivity); // Display its stats
                 } else {
-                    Log.e("StravaAPI", "Failed to fetch activities: " + response.message());
+                    Log.e("StravaAPI", "No activities found or failed to fetch: " + response.message());
                 }
             }
 
@@ -53,5 +49,33 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("StravaAPI", "API call failed: ", t);
             }
         });
+    }
+
+    // Display stats for the latest run
+    private void displayLastRunStats(Activity activity) {
+        String stats = "Name: " + activity.getName() +
+                "\nDistance: " + formatDistance(activity.getDistance()) +
+                "\nTime: " + formatTime(activity.getMoving_time()) +
+                "\nType: " + activity.getType() +
+                "\nDate: " + activity.getStart_date();
+
+        activityTextView.setText(stats); // Update the TextView with the stats
+    }
+
+    // Convert meters to kilometers
+    @SuppressLint("DefaultLocale")
+    private String formatDistance(float meters) {
+        return String.format("%.2f km", meters / 1000);
+    }
+
+    // Format time in hours, minutes, and seconds
+    @SuppressLint("DefaultLocale")
+    private String formatTime(int seconds)
+    {
+        int minutes = seconds / 60;
+        int hours = minutes / 60;
+        minutes %= 60;
+        seconds %= 60;
+        return hours > 0 ? String.format("%d hr %d min", hours, minutes) : String.format("%d min %d sec", minutes, seconds);
     }
 }
