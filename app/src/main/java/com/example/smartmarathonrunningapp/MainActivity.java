@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Fetches the latest activity using the repository
     private void fetchLatestActivity() {
-        String accessToken = "cee39cc9d13b2afa4c36ad12772d0876723149a9"; // Replace with a dynamically retrieved token
+        String accessToken = "8bffe76bc758c88e09f977d902ab4e78324207ed"; // Replace with a dynamically retrieved token
         stravaRepository.fetchActivities(accessToken, 1, 1, new Callback<List<Activity>>() {
             @Override
             public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
