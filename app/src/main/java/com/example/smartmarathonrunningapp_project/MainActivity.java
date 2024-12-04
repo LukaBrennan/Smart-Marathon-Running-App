@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Fetches the latest activity using the repository
     private void fetchLatestActivity() {
-        String accessToken = "34e906ba61956135f7adc2651509800339b0e3a6";
+        String accessToken = "298c1980cb69ac95538684e36c63cfb263ca2d34";
         stravaRepository.fetchActivities(accessToken, 1, 10, new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
@@ -41,9 +41,8 @@ public class MainActivity extends AppCompatActivity {
                     List<Activity> runs = filterRuns(response.body());
                     if(runs.size() >= 2){
                         Compare(runs.get(0), runs.get(1));
-                        displayLastRunStats(runs.get(0));
-
-                    }
+                    } else if (runs.size() == 1) {
+                        displayLastRunStats(runs.get(0));}
                 } else {
                     Log.e("StravaAPI", "No activities found or failed to fetch: " + response.message());
                 }
@@ -55,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    // This will filter out all activities from the runners Strava account to only show activities of type "Run"
     private List<Activity> filterRuns(List<Activity> activities) {
         List<Activity> runs = new ArrayList<>();
         for(Activity activity : activities)
@@ -67,22 +68,38 @@ public class MainActivity extends AppCompatActivity {
         return runs;
     }
 
-
+    // To show the completed run and the last run.
     private void Compare(Activity CurrentRun, Activity LastRun) {
-        String comparison = "Latest Run:" +
+        // These two float variables will calculate the pace for both runs (Current completed and previous)
+        float currentPace = calculatePace(CurrentRun.getMoving_time(), CurrentRun.getDistance());
+        float lastPace = calculatePace(LastRun.getMoving_time(), LastRun.getDistance());
+        // The "goalpace will determine   the increase or decrease for the next run
+        float goalpace = currentPace;
+        if (currentPace < lastPace)
+        {
+            goalpace -= 0.025F; // improve slightly by 0.025 pace min/km
+        }
+        else{
+            goalpace += 0.025F;// recover slightly by 0.025 pace min/km
+        }
+        String comparison = "Completed Run:" +
                 "Name: " + CurrentRun.getName() +
-                "Distance: " + formatDistance(CurrentRun.getDistance()) +
-                "Time: " + formatTime(CurrentRun.getMoving_time()) +
-                "Previous Run:" +
-                "Name: " + LastRun.getName() +
-                "Distance: " + formatDistance(LastRun.getDistance()) +
-                "Time: " + formatTime(LastRun.getMoving_time());
+                "\nDistance: " + formatDistance(CurrentRun.getDistance()) +
+                "\nTime: " + formatTime(CurrentRun.getMoving_time()) +
+                "\nPace: " + formatPace(currentPace)  +
+                "\nHeart Rate (Avg/Max): " + CurrentRun.getAverage_heartrate() + "/" + CurrentRun.getMax_heartrate() + "\n\n" +
 
+                "\n\nPrevious Run:" +
+                "Name: " + LastRun.getName() +
+                "\nDistance: " + formatDistance(LastRun.getDistance()) +
+                "\nTime: " + formatTime(LastRun.getMoving_time()) +
+                 "\nPace: " + formatPace(lastPace) + "\n" +
+                "\nHeart Rate (Avg/Max): " + LastRun.getAverage_heartrate() + "/" + LastRun.getMax_heartrate() + "\n\n" +
+
+                "Next Goal:\n" +
+                "Pace: " + formatPace(goalpace);
         activityTextView.setText(comparison);
     }
-
-
-
     // Display stats for the latest run
     private void displayLastRunStats(Activity activity) {
         String stats = "Name: " + activity.getName() +
@@ -110,4 +127,19 @@ public class MainActivity extends AppCompatActivity {
         seconds %= 60;
         return hours > 0 ? String.format("%d hr %d min", hours, minutes) : String.format("%d min %d sec", minutes, seconds);
     }
+
+    // used to calculate the pace in seconds per km
+    private float calculatePace(int movingTime, float distance) {
+        return movingTime / (distance / 1000); // returns pace in seconds per km
+    }
+
+    // Format pace to min/km
+    @SuppressLint("DefaultLocale")
+    private String formatPace(float paceInSeconds) {
+        int minutes = (int) (paceInSeconds / 60);
+        int seconds = (int) (paceInSeconds % 60);
+        return String.format("%d:%02d min/km", minutes, seconds);
+    }
+
+
 }

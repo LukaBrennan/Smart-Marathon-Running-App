@@ -9,6 +9,9 @@ public class Activity {
     private float total_elevation_gain;
     private String type;
     private String start_date;
+    private float average_speed;
+    private float average_heartrate;
+    private float max_heartrate;
 
 
     public void setName(String name) {
@@ -65,5 +68,29 @@ public class Activity {
 
     public String getName() {
         return name;
+    }
+
+    public float getAverage_speed() {
+        return average_speed;
+    }
+
+    public void setAverage_speed(float average_speed) {
+        this.average_speed = average_speed;
+    }
+
+    public float getMax_heartrate() {
+        return max_heartrate;
+    }
+
+    public void setMax_heartrate(float max_heartrate) {
+        this.max_heartrate = max_heartrate;
+    }
+
+    public float getAverage_heartrate() {
+        return average_heartrate;
+    }
+
+    public void setAverage_heartrate(float average_heartrate) {
+        this.average_heartrate = average_heartrate;
     }
 }
