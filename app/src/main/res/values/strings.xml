@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">SmartMArathonRunningApp-Project</string>
+    <string name="training_plan">Training plan</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">tuesday\n</string>
+    <string name="Tuesday">Tuesday</string>
+    <string name="Sunday">Sunday</string>
+    <string name="Saturday">Saturday</string>
+    <string name="Friday">Friday</string>
+    <string name="Thursday">Thursday</string>
+    <string name="Wensday">Wensday</string>
+    <string name="Wednesday">Wednesday</string>
 </resources>

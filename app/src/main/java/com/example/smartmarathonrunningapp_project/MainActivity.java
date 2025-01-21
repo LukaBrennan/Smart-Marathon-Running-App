@@ -32,43 +32,31 @@ public class MainActivity extends AppCompatActivity {
 
     // Fetches the latest activity using the repository
     private void fetchLatestActivity() {
-        String accessToken = "48d6c0e58c17fcc01d1ea4a0abe79aceb8d823cf";
+        String accessToken = "035a3b9259940e14b7ae1a1e60a2da42aba42d16";
         // The code below will filter the runs that is on the runner's strava account so that it shows the first page of data taken from the activities
         stravaRepository.fetchActivities(accessToken, 1, 10, new Callback<>() {
             @Override
-            public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response)
-            {
-                // Checking if valid - true path
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty())
-                {
+            public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     List<Activity> runs = filterRuns(response.body());
-                    if(runs.size() >= 2)
-                    {
+                    if(runs.size() >= 2){
                         Compare(runs.get(0), runs.get(1));
-                    }
-                    else if (runs.size() == 1)
-                    {
-                        displayLastRunStats(runs.get(0));
-                    }
-                }
-                // Not valid - false path
-                else
-                {
+                    } else if (runs.size() == 1) {
+                        displayLastRunStats(runs.get(0));}
+                } else {
                     Log.e("StravaAPI", "No activities found or failed to fetch: " + response.message());
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t)
-            {
+            public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t) {
                 Log.e("StravaAPI", "API call failed: ", t);
             }
         });
     }
 
     // This will filter out all activities from the runners Strava account to only show activities of type "Run"
-    private List<Activity> filterRuns(List<Activity> activities)
-    {
+    private List<Activity> filterRuns(List<Activity> activities) {
         List<Activity> runs = new ArrayList<>();
         for(Activity activity : activities)
         {
@@ -81,8 +69,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // To show the completed run and the last run.
-    private void Compare(Activity CurrentRun, Activity LastRun)
-    {
+    private void Compare(Activity CurrentRun, Activity LastRun) {
         // These two float variables will calculate the pace for both runs (Current completed and previous)
         float currentPace = calculatePace(CurrentRun.getMoving_time(), CurrentRun.getDistance());
         float lastPace = calculatePace(LastRun.getMoving_time(), LastRun.getDistance());
@@ -114,8 +101,7 @@ public class MainActivity extends AppCompatActivity {
         activityTextView.setText(comparison);
     }
     // Display stats for the latest run
-    private void displayLastRunStats(Activity activity)
-    {
+    private void displayLastRunStats(Activity activity) {
         String stats = "Name: " + activity.getName() +
                 "\nDistance: " + formatDistance(activity.getDistance()) +
                 "\nTime: " + formatTime(activity.getMoving_time()) +
@@ -127,8 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Convert meters to kilometers
     @SuppressLint("DefaultLocale")
-    private String formatDistance(float meters)
-    {
+    private String formatDistance(float meters) {
         return String.format("%.2f km", meters / 1000);
     }
 
@@ -144,17 +129,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // used to calculate the pace in seconds per km
-    private float calculatePace(int movingTime, float distance)
-    {
+    private float calculatePace(int movingTime, float distance) {
         return movingTime / (distance / 1000); // returns pace in seconds per km
     }
 
     // Format pace to min/km
     @SuppressLint("DefaultLocale")
-    private String formatPace(float paceInSeconds)
-    {
+    private String formatPace(float paceInSeconds) {
         int minutes = (int) (paceInSeconds / 60);
         int seconds = (int) (paceInSeconds % 60);
         return String.format("%d:%02d min/km", minutes, seconds);
     }
+
+
 }

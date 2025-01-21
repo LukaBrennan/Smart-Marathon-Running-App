@@ -1,14 +1,235 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#F5F5F5">
 
-    <TextView
-        android:id="@+id/activityTextView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:padding="8dp" />
-</LinearLayout>
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/headerTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/training_plan"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="16dp"
+            android:textColor="#333" />
+
+        <TextView
+            android:id="@+id/activityTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp"
+            android:visibility="gone" />
+
+        <!-- Monday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/mondayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/monday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/mondayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Tuesday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/tuesdayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Tuesday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/tuesdayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Wednesday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/wednesdayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Wednesday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/wednesdayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Thursday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/thursdayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Thursday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/thursdayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Friday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/fridayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Friday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/fridayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Saturday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/saturdayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Saturday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/saturdayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+
+        <!-- Sunday -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:id="@+id/sundayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Sunday"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="#000" />
+
+            <TextView
+                android:id="@+id/sundayDetailsTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                android:textSize="16sp"
+                android:textColor="#555" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
