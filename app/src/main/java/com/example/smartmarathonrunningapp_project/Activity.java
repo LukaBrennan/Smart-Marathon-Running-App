@@ -13,15 +13,6 @@ public class Activity {
     private float average_heartrate;
     private float max_heartrate;
     private float max_speed;
-    private float vo2max;
-
-    public float getVo2max() {
-        return vo2max;
-    }
-
-    public void setVo2max(float vo2max) {
-        this.vo2max = vo2max;
-    }
 
     public float getMax_speed() {
         return max_speed;
