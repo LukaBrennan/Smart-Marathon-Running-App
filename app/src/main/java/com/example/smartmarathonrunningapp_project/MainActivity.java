@@ -15,6 +15,13 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
     private StravaRepository stravaRepository;
     private TextView activityTextView;
+    private TextView mondayDetailsTextView;
+    private TextView tuesdayDetailsTextView;
+    private TextView wednesdayDetailsTextView;
+    private TextView thursdayDetailsTextView;
+    private TextView fridayrunDetailsTextView;
+    private TextView saturdayrunDetailsTextView;
+    private TextView sundayrunDetailsTextView;
     private float goalPace = 1.0f; // Stores the calculated goal pace for the next run
 
     @Override
@@ -23,6 +30,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         activityTextView = findViewById(R.id.activityTextView);
+        mondayDetailsTextView = findViewById(R.id.mondayDetailsTextView);
+        tuesdayDetailsTextView = findViewById(R.id.tuesdayDetailsTextView);
+        wednesdayDetailsTextView = findViewById(R.id.wednesdayDetailsTextView);
+        thursdayDetailsTextView = findViewById(R.id.thursdayDetailsTextView);
+        fridayrunDetailsTextView = findViewById(R.id.fridayrunDetailsTextView);
+        saturdayrunDetailsTextView = findViewById(R.id.saturdayrunDetailsTextView);
+        sundayrunDetailsTextView = findViewById(R.id.sundayrunDetailsTextView);
         stravaRepository = new StravaRepository();
 
         fetchLatestActivity();
@@ -53,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                                 List<Activity> runs = filterRuns(response.body());
                                 Log.d("StravaAPI", "Runs fetched: " + runs.size());
                                 if (runs.size() >= 2) {
-                                    processRuns(runs.get(0), runs.get(1));
+                                    processRuns(runs.get(1));
                                 }
                                 else if (runs.size() == 1)
                                 {
@@ -106,40 +120,29 @@ public class MainActivity extends AppCompatActivity {
         return runs;
     }
 
-    private void processRuns(Activity currentRun, Activity lastRun) {
-        float currentPace = calculatePace(currentRun.getMoving_time(), currentRun.getDistance());
-        float lastPace = calculatePace(lastRun.getMoving_time(), lastRun.getDistance());
+    private void processRuns(Activity lastRun) {
 
-        goalPace = currentPace < lastPace ? currentPace - 0.025F : currentPace + 0.025F;
+        float lastVO2Max = calculateVO2Max(lastRun.getDistance(), lastRun.getMoving_time(), lastRun.getAverage_heartrate());
 
-        displayTrainingPlan(currentRun, lastRun, goalPace);
+        // Adjust goal pace based on VO₂max
+        goalPace = determineGoalPace(lastVO2Max);
+
+        // Update the training plan in the UI
+        updateTrainingPlan();
     }
 
-    private void displayTrainingPlan(Activity currentRun, Activity lastRun, float goalPace) {
-        String plan = "Training Plan:\n\n" +
-                "Completed Run:\n" +
-                "Name: " + currentRun.getName() +
-                "\nDistance: " + formatDistance(currentRun.getDistance()) +
-                "\nTime: " + formatTime(currentRun.getMoving_time()) +
-                "\nPace: " + formatPace(calculatePace(currentRun.getMoving_time(), currentRun.getDistance())) +
-                "\nHeart Rate (Avg/Max): " + currentRun.getAverage_heartrate() + "/" + currentRun.getMax_heartrate() +
-                "\n\nPrevious Run:\n" +
-                "Name: " + lastRun.getName() +
-                "\nDistance: " + formatDistance(lastRun.getDistance()) +
-                "\nTime: " + formatTime(lastRun.getMoving_time()) +
-                "\nPace: " + formatPace(calculatePace(lastRun.getMoving_time(), lastRun.getDistance())) +
-                "\nHeart Rate (Avg/Max): " + lastRun.getAverage_heartrate() + "/" + lastRun.getMax_heartrate() +
-                "\n\nNext Goal:\n" +
-                "Goal Pace: " + formatPace(goalPace) + "\n\n" +
-                "Day 1: Easy run, maintain a pace of " + formatPace(goalPace + 0.3F) + "\n" +
-                "Day 2: Rest or cross-training\n" +
-                "Day 3: Tempo run at " + formatPace(goalPace - 0.2F) + "\n" +
-                "Day 4: Rest\n" +
-                "Day 5: Interval training (e.g., 4x800m at " + formatPace(goalPace - 0.1F) + ")\n" +
-                "Day 6: Long run, maintain a consistent pace\n" +
-                "Day 7: Recovery run, maintain a pace of " + formatPace(goalPace + 0.4F);
-
-        activityTextView.setText(plan);
+    @SuppressLint("SetTextI18n")
+    private void updateTrainingPlan()
+    {
+        // Update each TextView with dynamically calculated paces
+        mondayDetailsTextView.setText("Rest or cross-training");
+        tuesdayDetailsTextView.setText("Easy run, maintain a pace of " + formatPace(goalPace + 2));
+        wednesdayDetailsTextView.setText("Tempo run at " + formatPace(goalPace - 2));
+        thursdayDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+        fridayrunDetailsTextView.setText("Interval training (e.g., 4x800m at " + formatPace(goalPace - 5) + ")");
+        saturdayrunDetailsTextView.setText("Long run, maintain a consistent pace around " + formatPace(goalPace + 4));
+        sundayrunDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+        activityTextView.setText("Training Plan Updated Based on Recent Runs");
     }
 
     private void displayLastRunStats(Activity activity) {
@@ -152,6 +155,26 @@ public class MainActivity extends AppCompatActivity {
         activityTextView.setText(stats);
     }
 
+    private float calculateVO2Max(float distance, int movingTime, float avgHeartRate)
+    {
+        if (movingTime <= 0 || distance <= 0 || avgHeartRate <= 0) return 0;
+        float speed = distance / movingTime;
+        return (speed * 1000) / avgHeartRate;
+    }
+
+    private float determineGoalPace(float vo2Max)
+    {
+        if (vo2Max <= 0)
+        {
+            return 0;
+        }
+
+        float basePaceInSeconds = 300;
+        float adjustmentFactor = 50;
+        float paceInSeconds = basePaceInSeconds - (vo2Max - adjustmentFactor) * 2;
+
+        return Math.max(paceInSeconds, 180);
+    }
     @SuppressLint("DefaultLocale")
     private String formatDistance(float meters) {
         return String.format("%.2f km", meters / 1000);
@@ -164,11 +187,6 @@ public class MainActivity extends AppCompatActivity {
         minutes %= 60;
         seconds %= 60;
         return hours > 0 ? String.format("%d hr %d min", hours, minutes) : String.format("%d min %d sec", minutes, seconds);
-    }
-
-    private float calculatePace(int movingTime, float distance) {
-        if (distance <= 0) return 0;
-        return movingTime / (distance / 1000);
     }
 
     @SuppressLint("DefaultLocale")

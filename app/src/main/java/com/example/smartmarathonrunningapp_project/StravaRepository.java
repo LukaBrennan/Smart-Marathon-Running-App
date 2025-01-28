@@ -29,7 +29,7 @@ public class StravaRepository {
     public void refreshAccessToken(Callback<TokenResponse> callback) {
         String clientId = "136889";
         String clientSecret = "965e30fa3ac626ee90d757a1d48d147fc80ed035";
-        String refreshToken = "e4f2b4dc8956373147a167e5afaa1e4be5e91dfb";
+        String refreshToken = "e4f2b4dc8956373147a167e5afaa1e4be5e91dfb"; //Unique TODO: During final release to ensure that this is not hardcoded, so that all users refresh_tokens are able to work!
 
         Map<String, String> params = new HashMap<>();
         params.put("client_id", clientId);

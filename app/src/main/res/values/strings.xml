@@ -10,4 +10,10 @@
     <string name="Thursday">Thursday</string>
     <string name="Wensday">Wensday</string>
     <string name="Wednesday">Wednesday</string>
+    <string name="rest">rest</string>
+    <string name="marathon_pace_6_30_per_mile">marathon pace 6\'30\'\' per mile</string>
+    <string name="thursday">Thursday</string>
+    <string name="general_aerobic_7_40_per_mile">general aerobic 7\'40\'\' per mile</string>
+    <string name="recovery_8_per_mile">recovery 8\' per mile</string>
+    <string name="medium_long_run_first_third_7_40_second_7_20_last_third_7_00_per_mile">medium/long run first third 7\'40\'\', second 7\'20\'\', last third 7\'00\'\' per mile</string>
 </resources>
