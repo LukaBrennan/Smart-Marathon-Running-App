@@ -15,13 +15,13 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
     private StravaRepository stravaRepository;
     private TextView activityTextView;
-    private TextView mondayDetailsTextView;
-    private TextView tuesdayDetailsTextView;
-    private TextView wednesdayDetailsTextView;
-    private TextView thursdayDetailsTextView;
-    private TextView fridayrunDetailsTextView;
-    private TextView saturdayrunDetailsTextView;
-    private TextView sundayrunDetailsTextView;
+    private TextView week11Monday;
+    private TextView week11Tuesday;
+    private TextView week11Wednesday;
+    private TextView week11Thursday;
+    private TextView week11Friday;
+    private TextView week11Saturday;
+    private TextView week11Sunday;
     private float goalPace = 1.0f;
 
     @Override
@@ -29,86 +29,70 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        activityTextView = findViewById(R.id.activityTextView);
-        mondayDetailsTextView = findViewById(R.id.mondayDetailsTextView);
-        tuesdayDetailsTextView = findViewById(R.id.tuesdayDetailsTextView);
-        wednesdayDetailsTextView = findViewById(R.id.wednesdayDetailsTextView);
-        thursdayDetailsTextView = findViewById(R.id.thursdayDetailsTextView);
-        fridayrunDetailsTextView = findViewById(R.id.fridayrunDetailsTextView);
-        saturdayrunDetailsTextView = findViewById(R.id.saturdayrunDetailsTextView);
-        sundayrunDetailsTextView = findViewById(R.id.sundayrunDetailsTextView);
+        activityTextView = findViewById(R.id.trainingPlanTitle);
+        week11Monday = findViewById(R.id.week11Monday);
+        week11Tuesday = findViewById(R.id.week11Tuesday);
+        week11Wednesday = findViewById(R.id.week11Wednesday);
+        week11Thursday = findViewById(R.id.week11Thursday);
+        week11Friday = findViewById(R.id.week11Friday);
+        week11Saturday = findViewById(R.id.week11Saturday);
+        week11Sunday = findViewById(R.id.week11Sunday);
+
         stravaRepository = new StravaRepository();
 
         fetchLatestActivity();
     }
 
-    private void fetchLatestActivity()
-    {
-        stravaRepository.refreshAccessToken(new Callback<>()
-        {
+    private void fetchLatestActivity() {
+        stravaRepository.refreshAccessToken(new Callback<TokenResponse>() {
             @SuppressLint("SetTextI18n")
             @Override
-            public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response)
-            {
-                if (response.isSuccessful() && response.body() != null)
-                {
-                    // Checking if the access_token needs to be acquired, log request is used for debugging and viewing potential errors in the LogCat
+            public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
                     String newAccessToken = response.body().getAccessToken();
                     Log.d("StravaAPI", "Access token refreshed: " + newAccessToken);
 
-                    stravaRepository.fetchActivities(newAccessToken, 1, 10, new Callback<>()
-                    {
+                    stravaRepository.fetchActivities(newAccessToken, 1, 10, new Callback<List<Activity>>() {
                         @Override
-                        public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response)
-                        {
-                            if (response.isSuccessful() && response.body() != null && !response.body().isEmpty())
-                            {
+                        public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
+                            if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                                 List<Activity> runs = filterRuns(response.body());
                                 Log.d("StravaAPI", "Runs fetched: " + runs.size());
+
                                 if (runs.size() >= 2) {
                                     processRuns(runs.get(1));
-                                }
-                                else if (runs.size() == 1)
-                                {
+                                } else if (runs.size() == 1) {
                                     displayLastRunStats(runs.get(0));
-                                }
-                                else
-                                {
+                                } else {
                                     Log.d("StravaAPI", "No runs available in response.");
                                     activityTextView.setText("No recent runs found.");
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 Log.e("StravaAPI", "Failed to fetch activities. Response code: " + response.code());
                                 activityTextView.setText("Error fetching activities. Please check your access token.");
                             }
                         }
 
                         @Override
-                        public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t)
-                        {
+                        public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t) {
                             Log.e("StravaAPI", "API call failed: ", t);
                             activityTextView.setText("Failed to connect to Strava API.");
                         }
                     });
-                }
-                else
-                {
+                } else {
                     Log.e("StravaAPI", "Failed to refresh token. Response code: " + response.code());
                     activityTextView.setText("Error refreshing access token.");
                 }
             }
 
-            @SuppressLint("SetTextI18n")
             @Override
-            public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t)
-            {
+            public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t) {
                 Log.e("StravaAPI", "Token refresh failed: ", t);
                 activityTextView.setText("Failed to refresh access token.");
             }
         });
     }
+
     private List<Activity> filterRuns(List<Activity> activities) {
         List<Activity> runs = new ArrayList<>();
         for (Activity activity : activities) {
@@ -120,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processRuns(Activity lastRun) {
-
         float lastVO2Max = calculateVO2Max(lastRun.getDistance(), lastRun.getMoving_time(), lastRun.getAverage_heartrate());
 
         goalPace = determineGoalPace(lastVO2Max);
@@ -129,15 +112,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void updateTrainingPlan()
-    {
-        mondayDetailsTextView.setText("Rest or cross-training");
-        tuesdayDetailsTextView.setText("Easy run, maintain a pace of " + formatPace(goalPace + 2));
-        wednesdayDetailsTextView.setText("Tempo run at " + formatPace(goalPace - 2));
-        thursdayDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
-        fridayrunDetailsTextView.setText("Interval training (e.g., 4x800m at " + formatPace(goalPace - 5) + ")");
-        saturdayrunDetailsTextView.setText("Long run, maintain a consistent pace around " + formatPace(goalPace + 4));
-        sundayrunDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+    private void updateTrainingPlan() {
+        week11Monday.setText("Monday: Rest or cross-training");
+        week11Tuesday.setText("Tuesday: Easy run, maintain a pace of " + formatPace(goalPace + 10));
+        week11Wednesday.setText("Wednesday: Tempo run at " + formatPace(goalPace - 2));
+        week11Thursday.setText("Thursday: Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+        week11Friday.setText("Friday: Interval training (e.g., 4x800m at " + formatPace(goalPace - 5) + ")");
+        week11Saturday.setText("Saturday: Long run, maintain a consistent pace around " + formatPace(goalPace + 4));
+        week11Sunday.setText("Sunday: Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+
         activityTextView.setText("Training Plan Updated Based on Recent Runs");
     }
 
@@ -151,17 +134,14 @@ public class MainActivity extends AppCompatActivity {
         activityTextView.setText(stats);
     }
 
-    private float calculateVO2Max(float distance, int movingTime, float avgHeartRate)
-    {
+    private float calculateVO2Max(float distance, int movingTime, float avgHeartRate) {
         if (movingTime <= 0 || distance <= 0 || avgHeartRate <= 0) return 0;
         float speed = distance / movingTime;
         return (speed * 1000) / avgHeartRate;
     }
 
-    private float determineGoalPace(float vo2Max)
-    {
-        if (vo2Max <= 0)
-        {
+    private float determineGoalPace(float vo2Max) {
+        if (vo2Max <= 0) {
             return 0;
         }
 
@@ -171,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
         return Math.max(paceInSeconds, 180);
     }
+
     @SuppressLint("DefaultLocale")
     private String formatDistance(float meters) {
         return String.format("%.2f km", meters / 1000);
@@ -187,8 +168,20 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("DefaultLocale")
     private String formatPace(float paceInSeconds) {
+        // Format pace in minutes and seconds per kilometer
         int minutes = (int) (paceInSeconds / 60);
         int seconds = (int) (paceInSeconds % 60);
         return String.format("%d:%02d min/km", minutes, seconds);
     }
+}
+private void updateTrainingPlan() {
+    week11Monday.setText("Monday: Rest or cross-training");
+    week11Tuesday.setText("Tuesday: Easy run, maintain a pace of " + formatPace(goalPace + 10));
+    week11Wednesday.setText("Wednesday: Tempo run at " + formatPace(goalPace - 2));
+    week11Thursday.setText("Thursday: Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+    week11Friday.setText("Friday: Interval training (e.g., 4x800m at " + formatPace(goalPace - 5) + ")");
+    week11Saturday.setText("Saturday: Long run, maintain a consistent pace around " + formatPace(goalPace + 4));
+    week11Sunday.setText("Sunday: Recovery run, maintain a pace of " + formatPace(goalPace + 2));
+
+    activityTextView.setText("Training Plan Updated Based on Recent Runs");
 }

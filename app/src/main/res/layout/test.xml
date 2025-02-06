@@ -1,0 +1,1273 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Training Plan"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="16dp"
+            android:textColor="#333"
+            tools:ignore="HardcodedText" />
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*"
+            android:shrinkColumns="*">
+
+            <!-- Week 1 -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="#FFFFFF"
+                    android:elevation="2dp"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="8dp"
+                        android:text="Week 11"
+                        android:textColor="#000"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Wednesday: Rest or cross-training"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Thursday: General aerobic 9 mi"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Friday: Rest or cross-training"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Saturday: Recovery 5 mi"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="Sunday: Marathon-pace run 13 mi w/ 8 mi @ marathon race pace"
+                        android:textColor="#555"
+                        android:textSize="14sp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Week 10"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: Medium-long run 11 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: Rest or cross-training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Lactate threshold 8 mi w/ 4 mi @ 15K to half marathon pace"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Rest or cross-training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: Recovery 5 mi (8km)"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday:Medium-long run 15 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Week 9"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: General Aerobic + Speed 8 mi w/ 10 x 100 m strides"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: Recovery 4 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Medium-long run 11 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Rest or cross-training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: Recovery 4 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday: Marathon-pace run 16 mi w/ 10 mi @ marathon race pace"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Week 8"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: Recovery 5 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: Lactate threshold 10 mi w/ 5 mi @ 15K to half marathon pace"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Medium-long run 11 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Rest or cross-training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: Recovery 5 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday: Long run 17 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="(recovery) Week 7"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp"
+                    android:textColor="#000"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tuesday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Wednesday: Medium-long run 12 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Thursday: Rest ot Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Friday: Lactate threshold 9 mi w/ 4 mi @ 15K to half marathon pace"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saturday: Recovery 5 mi (8km)"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sunday:long run 16 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text=" Week 6"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: Recovery"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: V02 MAX 10 mi w/ 5 x 1,000m @ 5k race pace jog 50 to 90% interval time between"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Medium-long run 12 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: Recovery + speed 6 mi w/ 6 x 100m strides"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday: Marathon-pace run 15 mi w/ 12 mi @ marathon race pace"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Week 5"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp"
+                    android:textColor="#000"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tuesday: Recovery + speed 6 mi w/ 6 x 100m strides"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Wednesday: Medium-long run 12 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Thursday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Friday: Lactate threshold 9 mi w/ 4 mi @ 15K to half marathon pace"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saturday: Recovery 5 mi (8km)"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sunday: Long run 20 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Week 4"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: V02 MAX 8 mi w/ 5 x 600m @ 5k race pace jog 50 to 90% interval time between"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: Medium-long run 11 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Lactate threshold 9 mi w/ 4 mi @ 15K to half marathon pace"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: Recovery 5 mi (8km)"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday: Long run 17 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                tools:ignore="TooManyViews">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Week 3"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp"
+                    android:textColor="#000"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tuesday: Recovery + speed 7 mi w/ 6 x 100m strides"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Wednesday: V02 MAX 10 mi w/ 4 x 1,200m @ 5k race pace jog 50 to 90% interval time between"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Thursday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Friday: Medium-long run 11 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saturday: Recovery 4 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sunday: Long run 20 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="#FFFFFF"
+                    android:padding="16dp"
+                    android:elevation="2dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Week 2"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp"
+                        android:textColor="#000"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Monday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tuesday: V02 MAX 8 mi w/ 5 x 600m @ 5k race pace jog 50 to 90% interval time between"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wednesday: Recovery 6 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thursday: Rest or Cross-Training"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Friday: Recovery + speed 4 mi w/ 6 x 100m strides"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Saturday: 8k-10k tune-up race (total 9-11 mi)"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sunday: Long run 16 mi"
+                        android:textSize="14sp"
+                        android:textColor="#555"
+                        android:paddingBottom="4dp"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Week 1"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp"
+                    android:textColor="#000"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tuesday: General aerobic + speed 7 mi w/ 8 x 100m strides"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Wednesday: V02 MAX 8 mi w/ 3 x 1,600m @ 5k race pace jog 50 to 90% interval time between"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Thursday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Friday: Recovery + speed 5 mi w/ 6 x 100m strides"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saturday: Rest or Cross-Training"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sunday: Medium-long run 12 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:padding="16dp"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Race Week"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp"
+                    android:textColor="#000"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Monday: Rest"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tuesday: Recovery 6 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Wednesday: Dress rehersal 7 mi w/ 2 mi @ marathon race pace"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Thursday: Rest"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Friday: Recovery + speed 5 mi w/ 6 x 100m strides"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saturday: Recovery 4 mi"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sunday: Goal Marathon"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:paddingBottom="4dp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+            </TableRow>
+        </TableLayout>
+    </LinearLayout>
+</ScrollView>
+
+<!--<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-
+<TextView
+android:id="@+id/trainingPlanTitle"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:text="Training Plan"
+android:textSize="24sp"
+android:textStyle="bold"
+android:gravity="center"
+android:paddingBottom="16dp"
+android:textColor="#333"
+tools:ignore="HardcodedText" />
+
+<TableLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:stretchColumns="*"
+android:shrinkColumns="*">
+
+<TableRow
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="#FFFFFF"
+        android:elevation="2dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/week11Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:text="Week 11"
+            android:textColor="#000"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Monday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Monday: Rest or Cross-Training"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Wednesday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Wednesday: Rest or cross-training"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Thursday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Thursday: General aerobic 9 mi"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Friday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Friday: Rest or cross-training"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Saturday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Saturday: Recovery 5 mi"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week11Sunday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="Sunday: Marathon-pace run 13 mi w/ 8 mi @ marathon race pace"
+            android:textColor="#555"
+            android:textSize="14sp"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:padding="16dp"
+        android:elevation="2dp">
+
+        <TextView
+            android:id="@+id/week10Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Week 10"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"
+            android:textColor="#000"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Monday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Monday: Rest or Cross-Training"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Tuesday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tuesday: Medium-long run 11 mi"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Wednesday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Wednesday: Rest or cross-training"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Thursday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thursday: Lactate threshold 8 mi w/ 4 mi @ 15K to half marathon pace"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Friday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Friday: Rest or cross-training"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Saturday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Saturday: Recovery 5 mi (8km)"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/week10Sunday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sunday:Medium-long run 15 mi"
+            android:textSize="14sp"
+            android:textColor="#555"
+            android:paddingBottom="4dp"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+</TableRow>
+
+
+</TableLayout>
+    </LinearLayout>
+    </ScrollView>
+-->

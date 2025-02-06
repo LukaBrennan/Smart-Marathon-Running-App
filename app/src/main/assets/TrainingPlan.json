@@ -1,0 +1,39 @@
+{
+  "week": "11",
+  "training_plan": {
+    "Monday": {
+      "exercise": "Rest",
+      "pace": null
+    },
+    "Tuesday": {
+      "exercise": "General aerobic + speed",
+      "distance": "8 mi w/ 10 x 100m strides",
+      "pace": "8:00"
+    },
+    "Wednesday": {
+      "exercise": "Rest or cross-training",
+      "distance": "0",
+      "pace": "8:00"
+    },
+    "Thursday": {
+      "exercise": "General aerobic",
+      "distance": "9 mi",
+      "pace": "8:00"
+    },
+    "Friday": {
+      "exercise": "Rest or cross-training",
+      "distance": "0",
+      "pace": "8:00"
+    },
+    "Saturday": {
+      "exercise": "Recovery",
+      "distance": "5 mi",
+      "pace": "8:00"
+    },
+    "Sunday": {
+      "exercise": "Marathon-pace run",
+      "distance": "13 mi w/ 8 @ marathon race pace",
+      "pace": "6:10"
+    }
+  }
+}
