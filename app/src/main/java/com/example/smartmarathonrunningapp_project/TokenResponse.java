@@ -1,19 +1,14 @@
 package com.example.smartmarathonrunningapp_project;
 
 public class TokenResponse {
-    private String access_token;
-    private String refresh_token;
-    private long expires_at;
+    private final String access_token;
+
+    public TokenResponse(String accessToken) {
+        access_token = accessToken;
+    }
 
     public String getAccessToken() {
         return access_token;
     }
 
-    public String getRefreshToken() {
-        return refresh_token;
-    }
-
-    public long getExpiresAt() {
-        return expires_at;
-    }
 }
