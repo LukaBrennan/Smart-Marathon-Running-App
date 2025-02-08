@@ -12,7 +12,7 @@
     },
     "Wednesday": {
       "exercise": "Rest or cross-training",
-      "distance": "0",
+      "distance": "null",
       "pace": "8:00"
     },
     "Thursday": {
@@ -22,7 +22,7 @@
     },
     "Friday": {
       "exercise": "Rest or cross-training",
-      "distance": "0",
+      "distance": "null",
       "pace": "8:00"
     },
     "Saturday": {

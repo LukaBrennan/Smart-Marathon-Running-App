@@ -1,11 +1,14 @@
 package com.example.smartmarathonrunningapp_project;
-
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.gson.Gson;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -22,8 +25,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView fridayrunDetailsTextView;
     private TextView saturdayrunDetailsTextView;
     private TextView sundayrunDetailsTextView;
-    private float goalPace = 1.0f;
+    private Activity lastRun;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,9 +43,48 @@ public class MainActivity extends AppCompatActivity {
         sundayrunDetailsTextView = findViewById(R.id.sundayrunDetailsTextView);
         stravaRepository = new StravaRepository();
 
+        // Load the JSON data
+        TrainingPlan trainingPlan = loadTrainingPlanFromAssets();
+
         fetchLatestActivity();
+
+        // Update the JSON ui with the new pace calculated by V02max TODO - Not fully working
+        if (trainingPlan != null && lastRun != null)
+        {
+            float vo2Max = calculateVO2Max(lastRun.getDistance(), lastRun.getMoving_time(), lastRun.getAverage_heartrate());
+            updateUiWithTrainingPlan(trainingPlan, vo2Max);
+        } else {
+            activityTextView.setText("Failed to load training plan or fetch latest run.");
+        }
     }
 
+    // Method to load the contents of the TrainingPlan.json TODO - Need to add more than just week 11
+    private TrainingPlan loadTrainingPlanFromAssets()
+    {
+        try
+        {
+            InputStream inputStream = getAssets().open("TrainingPlan.json");
+            InputStreamReader reader = new InputStreamReader(inputStream);
+            Gson gson = new Gson();
+
+            // Debugging
+            StringBuilder jsonString = new StringBuilder();
+            int data;
+            while ((data = reader.read()) != -1)
+            {
+                jsonString.append((char) data);
+            }
+            Log.d("JSON_DEBUG", "Raw JSON: " + jsonString);
+
+            return gson.fromJson(jsonString.toString(), TrainingPlan.class);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    // Fetch the latest activity from Strava
     private void fetchLatestActivity()
     {
         stravaRepository.refreshAccessToken(new Callback<>()
@@ -52,12 +95,12 @@ public class MainActivity extends AppCompatActivity {
             {
                 if (response.isSuccessful() && response.body() != null)
                 {
-                    // Checking if the access_token needs to be acquired, log request is used for debugging and viewing potential errors in the LogCat
                     String newAccessToken = response.body().getAccessToken();
                     Log.d("StravaAPI", "Access token refreshed: " + newAccessToken);
 
                     stravaRepository.fetchActivities(newAccessToken, 1, 10, new Callback<>()
                     {
+                        @SuppressLint("SetTextI18n")
                         @Override
                         public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response)
                         {
@@ -65,38 +108,51 @@ public class MainActivity extends AppCompatActivity {
                             {
                                 List<Activity> runs = filterRuns(response.body());
                                 Log.d("StravaAPI", "Runs fetched: " + runs.size());
-                                if (runs.size() >= 2) {
-                                    processRuns(runs.get(1));
-                                }
-                                else if (runs.size() == 1)
+                                if (!runs.isEmpty())
                                 {
-                                    displayLastRunStats(runs.get(0));
+                                    lastRun = runs.get(0);
+
+                                    runOnUiThread(() -> // Updates the UI after a new run is found TODO - need to make sure that it will be properly working with more weeks and to not replace previous weeks
+                                    {
+                                        TrainingPlan trainingPlan = loadTrainingPlanFromAssets();
+                                        if (trainingPlan != null && lastRun != null)
+                                        {
+                                            float vo2Max = calculateVO2Max(lastRun.getDistance(), lastRun.getMoving_time(), lastRun.getAverage_heartrate());
+                                            updateUiWithTrainingPlan(trainingPlan, vo2Max);
+                                        }
+                                        else
+                                        {
+                                            Log.d("StravaAPI", "No runs available in response.");
+                                            activityTextView.setText("Failed to load training plan or fetch latest run.");
+                                        }
+                                    });
                                 }
                                 else
                                 {
                                     Log.d("StravaAPI", "No runs available in response.");
-                                    activityTextView.setText("No recent runs found.");
+                                    runOnUiThread(() -> activityTextView.setText("No recent runs found."));
                                 }
                             }
                             else
                             {
                                 Log.e("StravaAPI", "Failed to fetch activities. Response code: " + response.code());
-                                activityTextView.setText("Error fetching activities. Please check your access token.");
+                                runOnUiThread(() -> activityTextView.setText("Error fetching activities."));
                             }
                         }
 
+                        @SuppressLint("SetTextI18n")
                         @Override
                         public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t)
                         {
                             Log.e("StravaAPI", "API call failed: ", t);
-                            activityTextView.setText("Failed to connect to Strava API.");
+                            runOnUiThread(() -> activityTextView.setText("Failed to connect to Strava API."));
                         }
                     });
                 }
                 else
                 {
                     Log.e("StravaAPI", "Failed to refresh token. Response code: " + response.code());
-                    activityTextView.setText("Error refreshing access token.");
+                    runOnUiThread(() -> activityTextView.setText("Error refreshing access token."));
                 }
             }
 
@@ -105,52 +161,68 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t)
             {
                 Log.e("StravaAPI", "Token refresh failed: ", t);
-                activityTextView.setText("Failed to refresh access token.");
+                runOnUiThread(() -> activityTextView.setText("Failed to refresh access token."));
             }
         });
     }
-    private List<Activity> filterRuns(List<Activity> activities) {
+
+
+    private List<Activity> filterRuns(List<Activity> activities)
+    {
         List<Activity> runs = new ArrayList<>();
-        for (Activity activity : activities) {
-            if ("Run".equals(activity.getType())) {
+        for (Activity activity : activities)
+        {
+            if ("Run".equals(activity.getType()))
+            {
                 runs.add(activity);
             }
         }
         return runs;
     }
 
-    private void processRuns(Activity lastRun) {
-
-        float lastVO2Max = calculateVO2Max(lastRun.getDistance(), lastRun.getMoving_time(), lastRun.getAverage_heartrate());
-
-        goalPace = determineGoalPace(lastVO2Max);
-
-        updateTrainingPlan();
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void updateTrainingPlan()
+    // Updated version that uses the JSON file instead of hardcoded values from XML
+    private void updateUiWithTrainingPlan(TrainingPlan trainingPlan, float vo2Max)
     {
-        mondayDetailsTextView.setText("Rest or cross-training");
-        tuesdayDetailsTextView.setText("Easy run, maintain a pace of " + formatPace(goalPace + 2));
-        wednesdayDetailsTextView.setText("Tempo run at " + formatPace(goalPace - 2));
-        thursdayDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
-        fridayrunDetailsTextView.setText("Interval training (e.g., 4x800m at " + formatPace(goalPace - 5) + ")");
-        saturdayrunDetailsTextView.setText("Long run, maintain a consistent pace around " + formatPace(goalPace + 4));
-        sundayrunDetailsTextView.setText("Recovery run, maintain a pace of " + formatPace(goalPace + 2));
-        activityTextView.setText("Training Plan Updated Based on Recent Runs");
+        TrainingPlan.Days days = trainingPlan.getTraining_plan();
+        mondayDetailsTextView.setText(formatDay(days.getMonday(), vo2Max));
+        tuesdayDetailsTextView.setText(formatDay(days.getTuesday(), vo2Max));
+        wednesdayDetailsTextView.setText(formatDay(days.getWednesday(), vo2Max));
+        thursdayDetailsTextView.setText(formatDay(days.getThursday(), vo2Max));
+        fridayrunDetailsTextView.setText(formatDay(days.getFriday(), vo2Max));
+        saturdayrunDetailsTextView.setText(formatDay(days.getSaturday(), vo2Max));
+        sundayrunDetailsTextView.setText(formatDay(days.getSunday(), vo2Max));
     }
 
-    private void displayLastRunStats(Activity activity) {
-        String stats = "Name: " + activity.getName() +
-                "\nDistance: " + formatDistance(activity.getDistance()) +
-                "\nTime: " + formatTime(activity.getMoving_time()) +
-                "\nType: " + activity.getType() +
-                "\nDate: " + activity.getStart_date();
-
-        activityTextView.setText(stats);
+    // Format the different days for the Training plan with updated pace goals
+    private String formatDay(TrainingPlan.Day day, float vo2Max)
+    {
+        String pace = day.getPace();
+        if (pace != null)
+        {
+            pace = adjustPaceBasedOnVO2Max(pace, vo2Max);
+        }
+        return "Exercise: " + day.getExercise() + "\nDistance: " + day.getDistance() + "\nPace: " + pace;
     }
 
+    // Two methods below are generate by AI to try to try and do V02Max calculations, not working properly TODO - need to fix
+    @SuppressLint("DefaultLocale")
+    private String adjustPaceBasedOnVO2Max(String pace, float vo2Max)
+    {
+        String[] parts = pace.split(":");
+        int minutes = Integer.parseInt(parts[0]);
+        int seconds = Integer.parseInt(parts[1]);
+        int totalSeconds = minutes * 60 + seconds;
+
+        // Adjust totalSeconds based on VO2Max (example logic)
+        totalSeconds -= (int) (vo2Max / 10); // Example adjustment
+
+        // Convert back to "mm:ss" format
+        int adjustedMinutes = totalSeconds / 60;
+        int adjustedSeconds = totalSeconds % 60;
+        return String.format("%d:%02d", adjustedMinutes, adjustedSeconds);
+    }
+
+    // Calculate VO2Max
     private float calculateVO2Max(float distance, int movingTime, float avgHeartRate)
     {
         if (movingTime <= 0 || distance <= 0 || avgHeartRate <= 0) return 0;
@@ -158,37 +230,4 @@ public class MainActivity extends AppCompatActivity {
         return (speed * 1000) / avgHeartRate;
     }
 
-    private float determineGoalPace(float vo2Max)
-    {
-        if (vo2Max <= 0)
-        {
-            return 0;
-        }
-
-        float basePaceInSeconds = 300;
-        float adjustmentFactor = 50;
-        float paceInSeconds = basePaceInSeconds - (vo2Max - adjustmentFactor) * 2;
-
-        return Math.max(paceInSeconds, 180);
-    }
-    @SuppressLint("DefaultLocale")
-    private String formatDistance(float meters) {
-        return String.format("%.2f km", meters / 1000);
-    }
-
-    @SuppressLint("DefaultLocale")
-    private String formatTime(int seconds) {
-        int minutes = seconds / 60;
-        int hours = minutes / 60;
-        minutes %= 60;
-        seconds %= 60;
-        return hours > 0 ? String.format("%d hr %d min", hours, minutes) : String.format("%d min %d sec", minutes, seconds);
-    }
-
-    @SuppressLint("DefaultLocale")
-    private String formatPace(float paceInSeconds) {
-        int minutes = (int) (paceInSeconds / 60);
-        int seconds = (int) (paceInSeconds % 60);
-        return String.format("%d:%02d min/km", minutes, seconds);
-    }
 }
