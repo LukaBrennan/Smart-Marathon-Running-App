@@ -1,6 +1,6 @@
 package com.example.smartmarathonrunningapp_project;
-
-
+import java.util.List;
+// All of the api calls to get data from STRAVA
 public class Activity {
     private String name;
     private float distance;
@@ -13,6 +13,7 @@ public class Activity {
     private float average_heartrate;
     private float max_heartrate;
     private float max_speed;
+    private List<Float> start_latlng;
 
     public float getMax_speed() {
         return max_speed;
@@ -101,4 +102,21 @@ public class Activity {
     public void setAverage_heartrate(float average_heartrate) {
         this.average_heartrate = average_heartrate;
     }
+
+    public List<Float> getStart_latlng() {
+        return start_latlng;
+    }
+
+    public void setStart_latlng(List<Float> start_latlng) {
+        this.start_latlng = start_latlng;
+    }
+
+    public double getLatitude() {
+        return (start_latlng != null && !start_latlng.isEmpty()) ? start_latlng.get(0) : 0.0;
+    }
+
+    public double getLongitude() {
+        return (start_latlng != null && start_latlng.size() > 1) ? start_latlng.get(1) : 0.0;
+    }
+
 }
