@@ -208,20 +208,32 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     private String adjustPaceBasedOnVO2Max(String pace, float vo2Max)
     {
-        String[] parts = pace.split(":");
-        int minutes = Integer.parseInt(parts[0]);
-        int seconds = Integer.parseInt(parts[1]);
-        int totalSeconds = minutes * 60 + seconds;
+        String[] paceArray = pace.split(" - ");
+        List<String> adjustedPaces = new ArrayList<>();
 
-        // Adjust totalSeconds based on VO2Max (example logic)
-        totalSeconds -= (int) (vo2Max / 10); // Example adjustment
+        // Baseline trained VO2Max
+        float baselineVO2Max = 40.0f;
+        float adjustmentFactor = 1 - ((vo2Max - baselineVO2Max) / 100);
 
-        // Convert back to "mm:ss" format
-        int adjustedMinutes = totalSeconds / 60;
-        int adjustedSeconds = totalSeconds % 60;
-        return String.format("%d:%02d", adjustedMinutes, adjustedSeconds);
+        for (String p : paceArray) {
+            String[] parts = p.split(":");
+            if (parts.length < 2) continue;
+
+            int minutes = Integer.parseInt(parts[0]);
+            int seconds = Integer.parseInt(parts[1]);
+            int totalSeconds = minutes * 60 + seconds;
+
+            // Adjust totalSeconds based on VO2Max
+            totalSeconds *= adjustmentFactor;
+
+            // Convert back to "mm:ss"
+            int adjustedMinutes = totalSeconds / 60;
+            int adjustedSeconds = totalSeconds % 60;
+            adjustedPaces.add(String.format("%d:%02d", adjustedMinutes, adjustedSeconds));
+        }
+
+        return String.join(" - ", adjustedPaces);
     }
-
     // Calculate VO2Max
     private float calculateVO2Max(float distance, int movingTime, float avgHeartRate)
     {
