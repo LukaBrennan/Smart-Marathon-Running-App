@@ -1,39 +1,568 @@
 {
-  "week": "11",
-  "training_plan": {
-    "Monday": {
-      "exercise": "Rest",
-      "pace": null
+  "training_weeks": [
+    {
+      "week": "11",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "General aerobic + speed",
+          "distance": "8 mi w/ 10 x 100m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "General aerobic",
+          "distance": "9 mi",
+          "pace": "8:00 - 7:30 - 8:00",
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Marathon-pace run",
+          "distance": "13 mi w/ 8 @ marathon race pace",
+          "pace": "6:10",
+          "completed": false
+        }
+      }
     },
-    "Tuesday": {
-      "exercise": "General aerobic + speed",
-      "distance": "8 mi w/ 10 x 100m strides",
-      "pace": "7:40 - 7:20 - 7:00"
+    {
+      "week": "10",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Medium-long run",
+          "distance": "11 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Lactate threshold",
+          "distance": "8 mi w/ 4 mi @ 15K to half marathon race pace",
+          "pace": "7:20 - 7:00",
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Medium-long run",
+          "distance": "15 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
     },
-    "Wednesday": {
-      "exercise": "Rest or cross-training",
-      "distance": "null",
-      "pace": "null"
+    {
+      "week": "9",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "General aerobic + speed",
+          "distance": "8 mi w/ 10 x 100m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Recovery",
+          "distance": "4 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Medium-long run",
+          "distance": "11 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "4 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Marathon-pace run",
+          "distance": "16 mi w/ 10 @ marathon race pace",
+          "pace": "6:10",
+          "completed": false
+        }
+      }
     },
-    "Thursday": {
-      "exercise": "General aerobic",
-      "distance": "9 mi",
-      "pace": "7:40 - 7:20 - 7:00"
+    {
+      "week": "8",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Lactate threshold",
+          "distance": "10 mi w/ 5 mi @ 15K to half marathon race pace",
+          "pace": "7:20 - 7:00",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Medium-long run",
+          "distance": "11 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "17 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
     },
-    "Friday": {
-      "exercise": "Rest or cross-training",
-      "distance": "null",
-      "pace": "null"
+    {
+      "week": "7",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Medium-long run",
+          "distance": "12 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Lactate threshold",
+          "distance": "9 mi w/ 4 mi @ 15K to half marathon race pace",
+          "pace": "7:20 - 7:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "16 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
     },
-    "Saturday": {
-      "exercise": "Recovery",
-      "distance": "5 mi",
-      "pace": "8:00"
+    {
+      "week": "6",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "VO2 max",
+          "distance": "10 mi w/ 5 x 1,000 m @ 5K race pace",
+          "pace": "6:50 - 6:30",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Medium-long run",
+          "distance": "12 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery + speed",
+          "distance": "6 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Marathon-pace run",
+          "distance": "15 mi w/ 12 mi @ marathon race pace",
+          "pace": "6:10",
+          "completed": false
+        }
+      }
     },
-    "Sunday": {
-      "exercise": "Marathon-pace run",
-      "distance": "13 mi w/ 8 @ marathon race pace",
-      "pace": "6:10"
+    {
+      "week": "5",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Recovery + speed",
+          "distance": "6 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Medium-long run",
+          "distance": "12 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Lactate threshold",
+          "distance": "12 mi w/ 7 mi @ 15K to half marathon race pace",
+          "pace": "7:20 - 7:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "5 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "20 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
+    },
+    {
+      "week": "4",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "VO2 max",
+          "distance": "8 mi w/ 5 x 600 m @ 5K race pace",
+          "pace": "6:50 - 6:30",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Medium-long run",
+          "distance": "11 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Recovery + speed",
+          "distance": "4 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "8K-15K tune-up race",
+          "distance": "9-13 mi",
+          "pace": "6:30 - 6:10",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "17 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
+    },
+    {
+      "week": "3",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Recovery + speed",
+          "distance": "7 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "VO2 max",
+          "distance": "10 mi w/ 4 x 1,200 m @ 5K race pace",
+          "pace": "6:50 - 6:30",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Medium-long run",
+          "distance": "11 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "4 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "20 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
+    },
+    {
+      "week": "2",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "VO2 max",
+          "distance": "8 mi w/ 5 x 600 m @ 5K race pace",
+          "pace": "6:50 - 6:30",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Recovery",
+          "distance": "6 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Recovery + speed",
+          "distance": "4 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "8K-10K tune-up race",
+          "distance": "9-11 mi",
+          "pace": "6:30 - 6:10",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Long run",
+          "distance": "18 mi",
+          "pace": "7:00 - 7:30",
+          "completed": false
+        }
+      }
+    },
+    {
+      "week": "1",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "General aerobic + speed",
+          "distance": "7 mi w/ 8 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "VO2 max",
+          "distance": "8 mi w/ 3 x 1,600 m @ 5K race pace",
+          "pace": "6:50 - 6:30",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Recovery + speed",
+          "distance": "5 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Rest or cross-training",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Medium-long run",
+          "distance": "12 mi",
+          "pace": "7:40 - 7:20",
+          "completed": false
+        }
+      }
+    },
+    {
+      "week": "Race week",
+      "training_plan": {
+        "Monday": {
+          "exercise": "Rest",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Tuesday": {
+          "exercise": "Recovery",
+          "distance": "6 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Wednesday": {
+          "exercise": "Dress rehearsal",
+          "distance": "7 mi w/ 2 mi @ marathon race pace",
+          "pace": "6:10",
+          "completed": false
+        },
+        "Thursday": {
+          "exercise": "Rest",
+          "distance": "0 mi",
+          "pace": null,
+          "completed": false
+        },
+        "Friday": {
+          "exercise": "Recovery + speed",
+          "distance": "5 mi w/ 6 x 100 m strides",
+          "pace": "8:00 - 7:00 - 8:00",
+          "completed": false
+        },
+        "Saturday": {
+          "exercise": "Recovery",
+          "distance": "4 mi",
+          "pace": "8:00",
+          "completed": false
+        },
+        "Sunday": {
+          "exercise": "Goal marathon",
+          "distance": "26.2 mi",
+          "pace": "6:10",
+          "completed": false
+        }
+      }
     }
-  }
+  ]
 }
