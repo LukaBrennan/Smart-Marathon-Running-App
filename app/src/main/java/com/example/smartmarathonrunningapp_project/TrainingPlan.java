@@ -1,13 +1,37 @@
 package com.example.smartmarathonrunningapp_project;
-public class TrainingPlan {
-    private final Days training_plan;
 
-    public TrainingPlan(Days trainingPlan) {
-        training_plan = trainingPlan;
+import java.util.List;
+
+public class TrainingPlan {
+    private List<TrainingWeek> training_weeks;
+
+    public List<TrainingWeek> getTraining_weeks() {
+        return training_weeks;
     }
 
-    public Days getTraining_plan() {
-        return training_plan;
+    public void setTraining_weeks(List<TrainingWeek> training_weeks) {
+        this.training_weeks = training_weeks;
+    }
+
+    public static class TrainingWeek {
+        private String week;
+        private Days training_plan;
+
+        public String getWeek() {
+            return week;
+        }
+
+        public void setWeek(String week) {
+            this.week = week;
+        }
+
+        public Days getTraining_plan() {
+            return training_plan;
+        }
+
+        public void setTraining_plan(Days training_plan) {
+            this.training_plan = training_plan;
+        }
     }
 
     public static class Days {
@@ -19,7 +43,6 @@ public class TrainingPlan {
         private Day Saturday;
         private Day Sunday;
 
-        // Getters and Setters for each day
         public Day getMonday() {
             return Monday;
         }
@@ -77,11 +100,11 @@ public class TrainingPlan {
         }
     }
 
-    public static class Day
-    {
+    public static class Day {
         private String exercise;
         private String distance;
         private String pace;
+        private boolean completed;
 
         public String getExercise() {
             return exercise;
@@ -105,6 +128,14 @@ public class TrainingPlan {
 
         public void setPace(String pace) {
             this.pace = pace;
+        }
+
+        public boolean isCompleted() {
+            return completed;
+        }
+
+        public void setCompleted(boolean completed) {
+            this.completed = completed;
         }
     }
 }
