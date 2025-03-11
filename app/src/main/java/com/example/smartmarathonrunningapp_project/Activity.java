@@ -119,4 +119,6 @@ public class Activity {
         return (start_latlng != null && start_latlng.size() > 1) ? start_latlng.get(1) : 0.0;
     }
 
+    
+
 }

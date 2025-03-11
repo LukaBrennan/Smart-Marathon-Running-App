@@ -1,5 +1,10 @@
 package com.example.smartmarathonrunningapp_project;
 
+import android.util.Log;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,23 +13,38 @@ import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-// Handles API interactions with the Strava API
 public class StravaRepository {
-    private final StravaApiService apiService; // Retrofit interface for Strava API
+    private final StravaApiService apiService;
 
-    // Constructor initializes Retrofit
     public StravaRepository() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://www.strava.com/") // Base URL for Strava API
-                .addConverterFactory(GsonConverterFactory.create()) // Converts JSON to Java objects
+                .baseUrl("https://www.strava.com/")
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        apiService = retrofit.create(StravaApiService.class); // Create API service instance
+        apiService = retrofit.create(StravaApiService.class);
     }
 
-    // Fetches activities from the Strava API using a dynamic access token
+    // Fetch activities with date filters
     public void fetchActivities(String accessToken, int page, int perPage, Callback<List<Activity>> callback) {
-        apiService.getUserActivities("Bearer " + accessToken, page, perPage).enqueue(callback);
+        // Convert START_DATE and END_DATE to Unix timestamps
+        long after = convertDateToUnixTimestamp(MainActivity.START_DATE);
+        long before = convertDateToUnixTimestamp(MainActivity.END_DATE);
+
+        // Fetch activities with date filters
+        apiService.getUserActivities("Bearer " + accessToken, page, perPage, after, before).enqueue(callback);
+    }
+
+    // Helper method to convert date string to Unix timestamp
+    private long convertDateToUnixTimestamp(String dateStr) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date date = dateFormat.parse(dateStr);
+            return date.getTime() / 1000; // Convert to seconds
+        } catch (ParseException e) {
+            Log.e("StravaRepository", "Failed to parse date: " + dateStr, e);
+            return 0;
+        }
     }
     public void refreshAccessToken(Callback<TokenResponse> callback) {
         String clientId = "136889";
