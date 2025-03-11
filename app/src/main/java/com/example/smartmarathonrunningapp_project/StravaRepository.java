@@ -1,5 +1,6 @@
 package com.example.smartmarathonrunningapp_project;
 
+import android.annotation.SuppressLint;
 import android.util.Log;
 
 import java.text.ParseException;
@@ -26,10 +27,14 @@ public class StravaRepository {
     }
 
     // Fetch activities with date filters
+// Fetch activities with date filters
     public void fetchActivities(String accessToken, int page, int perPage, Callback<List<Activity>> callback) {
         // Convert START_DATE and END_DATE to Unix timestamps
         long after = convertDateToUnixTimestamp(MainActivity.START_DATE);
         long before = convertDateToUnixTimestamp(MainActivity.END_DATE);
+
+        // Log the timestamps for debugging
+        Log.d("StravaRepository", "Fetching activities between: " + MainActivity.START_DATE + " (" + after + ") and " + MainActivity.END_DATE + " (" + before + ")");
 
         // Fetch activities with date filters
         apiService.getUserActivities("Bearer " + accessToken, page, perPage, after, before).enqueue(callback);
@@ -37,9 +42,10 @@ public class StravaRepository {
 
     // Helper method to convert date string to Unix timestamp
     private long convertDateToUnixTimestamp(String dateStr) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try {
             Date date = dateFormat.parse(dateStr);
+            assert date != null;
             return date.getTime() / 1000; // Convert to seconds
         } catch (ParseException e) {
             Log.e("StravaRepository", "Failed to parse date: " + dateStr, e);

@@ -1,5 +1,6 @@
 package com.example.smartmarathonrunningapp_project;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -7,7 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.gson.Gson;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 import retrofit2.Call;
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String START_DATE = "2023-08-07";
     public static final String END_DATE = "2023-10-29";
     private TrainingPlan trainingPlan;
-    private Map<String, Float> performanceData = new HashMap<>(); // Key: Week + Day, Value: Average Pace
+    private final Map<String, Float> performanceData = new HashMap<>(); // Key: Week + Day, Value: Average Pace
 
     // Constants for log tags and day names
     private static final String TAG = "MainActivity";
@@ -70,8 +71,18 @@ public class MainActivity extends AppCompatActivity {
                                 List<Activity> activities = response.body();
                                 Log.d(TAG, "Fetched activities: " + activities.size());
 
+                                // Log the start dates of the fetched activities
+                                for (Activity activity : activities) {
+                                    String startDate = activity.getStart_date();
+                                    Log.d(TAG, "Activity: " + activity.getName() + ", Date: " + startDate);
+                                }
+
+                                // Filter activities locally to ensure they fall within the specified date range
+                                List<Activity> filteredActivities = filterActivitiesByDate(activities);
+                                Log.d(TAG, "Filtered activities: " + filteredActivities.size());
+
                                 // Process one run per day
-                                List<Activity> oneRunPerDay = getOneRunPerDay(activities);
+                                List<Activity> oneRunPerDay = getOneRunPerDay(filteredActivities);
                                 Log.d(TAG, "One run per day: " + oneRunPerDay.size());
 
                                 // Load the training plan
@@ -151,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Find the corresponding day in the training plan
         TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
+        assert firstActivityDay != null;
         TrainingPlan.Day firstDay = getDayByName(firstWeek, firstActivityDay);
 
         if (firstDay != null) {
@@ -199,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
     // Adjust pace for the next training day based on the first day's performance
     private void adjustNextTrainingDayPace(TrainingPlan.TrainingWeek week, String currentDayName, Activity activity) {
         String nextDayName = getNextDayName(currentDayName);
+        assert nextDayName != null;
         TrainingPlan.Day nextDay = getDayByName(week, nextDayName);
 
         if (nextDay != null && nextDay.getPace() != null) {
@@ -247,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Update the UI with the updated training plan
+    @SuppressLint("SetTextI18n")
     private void updateUI(TrainingPlan trainingPlan) {
         LinearLayout weekContainer = findViewById(R.id.weekContainer);
         weekContainer.removeAllViews(); // Clear existing views
@@ -271,6 +285,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Add a TextView for a specific day
+    @SuppressLint("SetTextI18n")
     private void addDayTextView(TrainingPlan.Day day, String dayName, LinearLayout container) {
         if (day != null) {
             TextView dayTextView = new TextView(this);
@@ -282,21 +297,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Save the updated training plan to a JSON file
-    private void saveTrainingPlanToFile(TrainingPlan trainingPlan, String filePath) {
-        try (FileWriter writer = new FileWriter(filePath)) {
-            Gson gson = new Gson();
-            gson.toJson(trainingPlan, writer);
-            Log.d(TAG, "Training plan saved to " + filePath);
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to save training plan", e);
-        }
-    }
+//    private void saveTrainingPlanToFile(TrainingPlan trainingPlan, String filePath) {
+//        try (FileWriter writer = new FileWriter(filePath)) {
+//            Gson gson = new Gson();
+//            gson.toJson(trainingPlan, writer);
+//            Log.d(TAG, "Training plan saved to " + filePath);
+//        } catch (IOException e) {
+//            Log.e(TAG, "Failed to save training plan", e);
+//        }
+//    }
 
     // Parse distance string (e.g., "8 mi") to float
-    private float parseDistance(String distance) {
-        if (distance == null || distance.isEmpty()) return 0;
-        return Float.parseFloat(distance.replaceAll("[^0-9.]", ""));
-    }
+//    private float parseDistance(String distance) {
+//        if (distance == null || distance.isEmpty()) return 0;
+//        return Float.parseFloat(distance.replaceAll("[^0-9.]", ""));
+//    }
 
     // Parse pace string (e.g., "8:00") to seconds
     private int parseTime(String pace) {
@@ -321,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Format time in seconds to "mm:ss"
+    @SuppressLint("DefaultLocale")
     private String formatTime(int timeInSeconds) {
         int minutes = timeInSeconds / 60;
         int seconds = timeInSeconds % 60;
@@ -329,10 +345,10 @@ public class MainActivity extends AppCompatActivity {
 
     // Helper method to get the day of the week from a date string
     private String getDayOfWeek(String date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try {
             Date activityDate = dateFormat.parse(date);
-            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE"); // E.g., "Monday"
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE"); // E.g., "Monday"
             return dayFormat.format(activityDate);
         } catch (ParseException e) {
             Log.e(TAG, "Failed to parse date: " + date, e);
@@ -413,5 +429,44 @@ public class MainActivity extends AppCompatActivity {
         float averageHeartRate = activity.getAverage_heartrate();
         int targetMaxHeartRate = 160; // Example: Maximum target heart rate
         return averageHeartRate > targetMaxHeartRate;
+    }
+
+    // Helper method to convert date string to Unix timestamp
+//    private long convertDateToUnixTimestamp(String dateStr) {
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+//        try {
+//            Date date = dateFormat.parse(dateStr);
+//            return date.getTime() / 1000; // Convert to seconds
+//        } catch (ParseException e) {
+//            Log.e(TAG, "Failed to parse date: " + dateStr, e);
+//            return 0; // Return 0 if parsing fails
+//        }
+//    }
+
+    // Filter activities by date range
+// Filter activities by date range
+    private List<Activity> filterActivitiesByDate(List<Activity> activities) {
+        List<Activity> filteredActivities = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
+
+        try {
+            Date startDate = dateFormat.parse(MainActivity.START_DATE + "T00:00:00Z"); // Start of the start date
+            Date endDate = dateFormat.parse(MainActivity.END_DATE + "T23:59:59Z"); // End of the end date
+
+            for (Activity activity : activities) {
+                String activityDateStr = activity.getStart_date(); // Full date string (e.g., "2023-10-26T16:06:37Z")
+                Date activityDate = dateFormat.parse(activityDateStr);
+
+                // Check if the activity date falls within the specified range
+                assert activityDate != null;
+                if (!activityDate.before(startDate) && !activityDate.after(endDate)) {
+                    filteredActivities.add(activity);
+                }
+            }
+        } catch (ParseException e) {
+            Log.e(TAG, "Failed to parse date", e);
+        }
+
+        return filteredActivities;
     }
 }
