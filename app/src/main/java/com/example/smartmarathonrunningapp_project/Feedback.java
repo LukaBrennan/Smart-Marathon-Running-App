@@ -12,7 +12,6 @@ import java.util.Map;
 public class Feedback {
     private static final String TAG = "Feedback";
 
-    // Class to hold the feedback result
     public static class FeedbackResult {
         private final String feedback;
         private final float paceSlope;
@@ -43,41 +42,34 @@ public class Feedback {
         }
     }
 
-    // Method to calculate fitness trends and provide feedback
     public static FeedbackResult getFitnessFeedback(List<Activity> activities) {
         if (activities == null || activities.isEmpty()) {
             return new FeedbackResult("No activities found to analyze fitness trends.", 0, 0, 0);
         }
 
-        // Analyze fitness trends
         Map<String, Float> weeklyAveragePace = new HashMap<>();
         Map<String, Float> weeklyHeartRate = new HashMap<>();
         Map<String, Float> weeklyDistance = new HashMap<>();
 
-        // Populate weekly metrics
         for (Activity activity : activities) {
             String week = getWeekOfYear(activity.getStart_date());
             float pace = activity.getMoving_time() / activity.getDistance();
             float heartRate = activity.getAverage_heartrate();
             float distance = activity.getDistance();
 
-            // Update weekly averages
             weeklyAveragePace.put(week, weeklyAveragePace.containsKey(week) ? (weeklyAveragePace.get(week) + pace) / 2 : pace);
             weeklyHeartRate.put(week, weeklyHeartRate.containsKey(week) ? (weeklyHeartRate.get(week) + heartRate) / 2 : heartRate);
             weeklyDistance.put(week, weeklyDistance.containsKey(week) ? weeklyDistance.get(week) + distance : distance);
         }
 
-        // Convert maps to lists (ordered by week)
         List<Float> paceTrends = new ArrayList<>(weeklyAveragePace.values());
         List<Float> heartRateTrends = new ArrayList<>(weeklyHeartRate.values());
         List<Float> distanceTrends = new ArrayList<>(weeklyDistance.values());
 
-        // Calculate trends
         float paceSlope = calculateTrend(paceTrends);
         float heartRateSlope = calculateTrend(heartRateTrends);
         float distanceSlope = calculateTrend(distanceTrends);
 
-        // Generate feedback
         StringBuilder feedback = new StringBuilder();
         feedback.append("Fitness Trends:\n");
         feedback.append("Pace Trend: ").append(paceSlope < 0 ? "Improving" : "Stable/Declining").append("\n");
@@ -88,27 +80,24 @@ public class Feedback {
         return new FeedbackResult(feedback.toString(), paceSlope, heartRateSlope, distanceSlope);
     }
 
-    // Helper method to calculate trends for a specific metric
     private static float calculateTrend(List<Float> values) {
         if (values == null || values.size() < 2) {
-            return 0; // Not enough data to calculate a trend
+            return 0;
         }
 
         float sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
         int n = values.size();
 
         for (int i = 0; i < n; i++) {
-            sumX += i; // X-axis: Week number
-            sumY += values.get(i); // Y-axis: Metric value (e.g., pace, distance)
+            sumX += i;
+            sumY += values.get(i);
             sumXY += i * values.get(i);
             sumX2 += i * i;
         }
 
-        float slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-        return slope;
+        return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     }
 
-    // Helper method to get the week of the year from a date string
     private static String getWeekOfYear(String date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try {
