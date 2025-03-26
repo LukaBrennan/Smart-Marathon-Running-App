@@ -10,7 +10,6 @@ public class Auth extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         initiateOAuth();
-
     }
     private void initiateOAuth()
             // TODO - Only 1 runner is able to use, last iteration make this dynamic with a DataBase
@@ -24,4 +23,4 @@ public class Auth extends AppCompatActivity
                 + "&scope=activity:read";
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
     }
-    }
+}

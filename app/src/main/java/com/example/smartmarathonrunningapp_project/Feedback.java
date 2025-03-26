@@ -1,5 +1,4 @@
 package com.example.smartmarathonrunningapp_project;
-
 import android.util.Log;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -8,42 +7,48 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-public class Feedback {
+public class Feedback
+{
     private static final String TAG = "Feedback";
-
-    public static class FeedbackResult {
+    public static class FeedbackResult
+    {
         private final String feedback;
         private final float paceSlope;
         private final float heartRateSlope;
         private final float distanceSlope;
 
-        public FeedbackResult(String feedback, float paceSlope, float heartRateSlope, float distanceSlope) {
+        public FeedbackResult(String feedback, float paceSlope, float heartRateSlope, float distanceSlope)
+        {
             this.feedback = feedback;
             this.paceSlope = paceSlope;
             this.heartRateSlope = heartRateSlope;
             this.distanceSlope = distanceSlope;
         }
-
-        public String getFeedback() {
+        public String getFeedback()
+        {
             return feedback;
         }
 
-        public float getPaceSlope() {
+        public float getPaceSlope()
+        {
             return paceSlope;
         }
 
-        public float getHeartRateSlope() {
+        public float getHeartRateSlope()
+        {
             return heartRateSlope;
         }
 
-        public float getDistanceSlope() {
+        public float getDistanceSlope()
+        {
             return distanceSlope;
         }
     }
 
-    public static FeedbackResult getFitnessFeedback(List<Activity> activities) {
-        if (activities == null || activities.isEmpty()) {
+    public static FeedbackResult getFitnessFeedback(List<Activity> activities)
+    {
+        if (activities == null || activities.isEmpty())
+        {
             return new FeedbackResult("No activities found to analyze fitness trends.", 0, 0, 0);
         }
 
@@ -51,7 +56,8 @@ public class Feedback {
         Map<String, Float> weeklyHeartRate = new HashMap<>();
         Map<String, Float> weeklyDistance = new HashMap<>();
 
-        for (Activity activity : activities) {
+        for (Activity activity : activities)
+        {
             String week = getWeekOfYear(activity.getStart_date());
             float pace = activity.getMoving_time() / activity.getDistance();
             float heartRate = activity.getAverage_heartrate();
@@ -80,15 +86,17 @@ public class Feedback {
         return new FeedbackResult(feedback.toString(), paceSlope, heartRateSlope, distanceSlope);
     }
 
-    private static float calculateTrend(List<Float> values) {
-        if (values == null || values.size() < 2) {
+    private static float calculateTrend(List<Float> values)
+    {
+        if (values == null || values.size() < 2)
+        {
             return 0;
         }
-
         float sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
         int n = values.size();
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++)
+        {
             sumX += i;
             sumY += values.get(i);
             sumXY += i * values.get(i);
@@ -98,13 +106,17 @@ public class Feedback {
         return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     }
 
-    private static String getWeekOfYear(String date) {
+    private static String getWeekOfYear(String date)
+    {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try {
+        try
+        {
             Date activityDate = dateFormat.parse(date);
             SimpleDateFormat weekFormat = new SimpleDateFormat("w");
             return weekFormat.format(activityDate);
-        } catch (ParseException e) {
+        }
+        catch (ParseException e)
+        {
             Log.e(TAG, "Failed to parse date: " + date, e);
             return null;
         }
