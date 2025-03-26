@@ -273,20 +273,20 @@ public class MainActivity extends AppCompatActivity
 
         if (nextDay != null && nextDay.getPace() != null)
         {
-            float activityDistance = UnitConverter.metersToMiles(activity.getDistance());
+            float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
             float activityTime = activity.getMoving_time();
-            float averagePace = activityTime / activityDistance; // Pace in seconds per unit distance
+            float averagePaceSecPerMile = activityTime / activityDistanceMiles;
             float requiredPace = parseTime(nextDay.getPace());
 
             // TODO - No check for maintain pace, need improve on this section using a better check
-            if (averagePace < requiredPace)
+            if (averagePaceSecPerMile  < requiredPace)
             {
                 // Runner is faster than the target pace
                 float newPace = requiredPace * 0.95f; // Increase pace by 5%
                 nextDay.setPace(formatTime((int) newPace));
                 Log.d(TAG, "Next day (" + nextDayName + "): Increased pace to " + formatTime((int) newPace));
             }
-            else if (averagePace > requiredPace)
+            else if (averagePaceSecPerMile  > requiredPace)
             {
                 // Runner is slower than the target pace
                 float newPace = requiredPace * 1.05f; // Decrease pace by 5%
@@ -439,8 +439,7 @@ public class MainActivity extends AppCompatActivity
 
     private boolean activityMatchesPlan(Activity activity, TrainingPlan.Day day)
     {
-        Log.d(TAG, "Checking activity: " + activity.getType() + ", " + activity.getDistance() + " mi, " + activity.getMoving_time() + "s");
-
+        Log.d(TAG, "Checking activity: " + activity.getType() + ", " + activity.getDistance() + " meters, " + activity.getMoving_time() + "s");
         // Compare activity details with the training plan
         if (!activity.getType().equals("Run"))
         {
@@ -466,15 +465,16 @@ public class MainActivity extends AppCompatActivity
 
     private void trackPerformance(Activity activity, TrainingPlan.Day day, String week, String dayName)
     {
-        float activityDistance = activity.getDistance();
+        float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
         float activityTime = activity.getMoving_time();
-        float averagePace = activityTime / activityDistance; // Pace in seconds per unit distance
+        float averagePaceSecPerMile = activityTime / activityDistanceMiles;
         float averageHeartRate = activity.getAverage_heartrate();
-        performanceData.put(week + " - " + dayName, averagePace);
+        performanceData.put(week + " - " + dayName, averagePaceSecPerMile);
 
         // Log performance data
-        Log.d(TAG, "Week " + week + ", " + dayName + ": Average Pace = " + formatTime((int) averagePace));
-        Log.d(TAG, "Week " + week + ", " + dayName + ": Average Heart Rate = " + averageHeartRate);
+        Log.d(TAG, "Week " + week + ", " + dayName + ": Average Pace = " + formatTime((int) averagePaceSecPerMile) + " min/mile");
+        Log.d(TAG, "Distance: " + activityDistanceMiles + " miles (" + activity.getDistance() + " meters)");
+        Log.d(TAG, "Week " + week + ", " + dayName + ": Average Heart Rate = " + activity.getAverage_heartrate());
 
         // Adjust pace based on heart rate
         if (isHeartRateTooHigh(activity))
@@ -518,13 +518,6 @@ public class MainActivity extends AppCompatActivity
 
             for (Activity activity : activities)
             {
-                float distanceMiles = UnitConverter.metersToMiles(activity.getDistance());
-                // Issue with unrealistic values, checking them here
-                if (distanceMiles > 100 || distanceMiles < 0.1)
-                {
-                    Log.d(TAG, "Skipped activity with unrealistic distance: " + distanceMiles + " mi");
-                    continue;
-                }
                 String activityDateStr = activity.getStart_date();
                 Date activityDate = dateFormat.parse(activityDateStr);
 
