@@ -445,9 +445,8 @@ public class MainActivity extends AppCompatActivity
     {
         try
         {
-            @SuppressLint("SimpleDateFormat")
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
-            return dateFormat.parse(dateStr);
+            // Try parsing with both formats and return the result
+            return tryParseWithFormats(dateStr);
         }
         catch (ParseException e)
         {
@@ -455,6 +454,24 @@ public class MainActivity extends AppCompatActivity
             return null;
         }
     }
+
+    // Separate method to handle parsing with the different formats
+    private Date tryParseWithFormats(String dateStr) throws ParseException
+    {
+        SimpleDateFormat dateFormatWithTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
+        SimpleDateFormat dateFormatWithDateOnly = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        // First attempt to parse with the full format
+        try
+        {
+            return dateFormatWithTime.parse(dateStr);
+        }
+        // If it fails, try parsing with the date-only format
+        catch (ParseException e)
+        {
+            return dateFormatWithDateOnly.parse(dateStr);
+        }
+    }
+
 
     private List<Activity> filterActivitiesByDate(List<Activity> activities)
     {
