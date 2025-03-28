@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity
     // Dates for getting STRAVA data
     public static final String START_DATE = "2023-08-07";
     public static final String END_DATE = "2023-10-29";
+
+    private static final String ERROR_LOG = "failed to parse date";  // Compliant
     private TrainingPlan trainingPlan; // Stores the loaded training plan
     private final Map<String, Float> performanceData = new HashMap<>(); // keeps track of training performance
 
@@ -129,7 +131,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    //TODO - May remove for now, possible cause for errors
         // Process one run per day
     List<Activity> extractDailyRuns(List<Activity> activities)
         {
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity
         for (Activity activity : activities)
         {
             String activityDate = activity.getStart_date().split("T")[0]; // Extract date part (e.g., "2023-08-07")
-            runsByDate.computeIfAbsent(activityDate, k -> activity); // Add the first run for each date if not present
+            runsByDate.putIfAbsent(activityDate, activity); // Add the first run for each date if not present
             }
             return new ArrayList<>(runsByDate.values());
         }
@@ -163,7 +164,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    // TODO - Might comment this section out, not really needed for now
     // Get the corresponding day by name
     private TrainingPlan.Day getDayByName(TrainingPlan.TrainingWeek week, String dayName) {
         Map<String, TrainingPlan.Day> dayMap = Map.of(
@@ -203,7 +203,6 @@ public class MainActivity extends AppCompatActivity
         Activity firstActivity = activities.get(0);
         String firstActivityDay = getDayOfWeek(firstActivity.getStart_date());
 
-        // TODO - Might need to remove or alter, Possible cause for the NAN value errors in the LogCat info
         // Find the corresponding day in the training plan
         TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
         assert firstActivityDay != null;
@@ -242,10 +241,17 @@ public class MainActivity extends AppCompatActivity
         {
             float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
             float activityTime = activity.getMoving_time();
+
+            // Check for NAN values
+            if (activityDistanceMiles == 0 || activityTime == 0)
+            {
+                Log.e(TAG, "Invalid activity data: distance=" + activityDistanceMiles + ", time=" + activityTime);
+                return;
+            }
+
             float averagePaceSecPerMile = activityTime / activityDistanceMiles;
             float requiredPace = convertPaceToSeconds(nextDay.getPace());
 
-            // TODO - No check for maintain pace, need improve on this section using a better check
             if (averagePaceSecPerMile  < requiredPace)
             {
                 // Runner is faster than the target pace
@@ -342,7 +348,7 @@ public class MainActivity extends AppCompatActivity
         }
         catch (ParseException e)
         {
-            Log.e(TAG, "Failed to parse date: " + date, e);
+            Log.e(TAG, ERROR_LOG + date, e);
             return null;
         }
     }
@@ -407,6 +413,11 @@ public class MainActivity extends AppCompatActivity
         float activityTime = activity.getMoving_time();
         float averagePaceSecPerMile = activityTime / activityDistanceMiles;
         performanceData.put(week + " - " + dayName, averagePaceSecPerMile);
+        for (Map.Entry<String, Float> entry : performanceData.entrySet())
+        {
+            Log.d(TAG, "Performance Data for " + entry.getKey() + ": " + entry.getValue());
+        }
+
 
         // Log performance data
         Log.d(TAG,  week + ", " + dayName + ": Average Pace = " + convertSecondsToPace((int) averagePaceSecPerMile) + " min/mile");
@@ -440,7 +451,7 @@ public class MainActivity extends AppCompatActivity
         }
         catch (ParseException e)
         {
-            Log.e(TAG, "Failed to parse date: " + dateStr, e);
+            Log.e(TAG, ERROR_LOG + dateStr, e);
             return null;
         }
     }
@@ -448,8 +459,14 @@ public class MainActivity extends AppCompatActivity
     private List<Activity> filterActivitiesByDate(List<Activity> activities)
     {
         List<Activity> filteredActivities = new ArrayList<>();
-        Date startDate = parseDate(MainActivity.START_DATE + "T00:00:00Z");
-        Date endDate = parseDate(MainActivity.END_DATE + "T23:59:59Z");
+
+        Date startDate = parseDate(MainActivity.START_DATE);
+        Date endDate = parseDate(MainActivity.END_DATE);
+        // Filtering null dates
+        if (startDate == null || endDate == null) {
+            Log.e(TAG, "Invalid date range. Skipping filtering.");
+            return filteredActivities;
+        }
 
         for (Activity activity : activities)
         {
