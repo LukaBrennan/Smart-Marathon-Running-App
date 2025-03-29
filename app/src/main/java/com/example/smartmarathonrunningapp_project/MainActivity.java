@@ -1,13 +1,16 @@
 package com.example.smartmarathonrunningapp_project;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 // used for parsing JSON data into Java objects
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 // Handle file reading from assets folder
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +56,14 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Button btnFeedback = findViewById(R.id.feedbackButton);
+        btnFeedback.setOnClickListener(v -> {
+            // Pass the performance data to FeedbackActivity
+            Intent intent = new Intent(MainActivity.this, FeedbackActivity.class);
+            intent.putExtra("performanceData", new Gson().toJson(performanceData));
+            startActivity(intent);
+        });
 
         stravaRepository = new StravaRepository();
 
@@ -162,6 +173,21 @@ public class MainActivity extends AppCompatActivity
             return null;
         }
     }
+
+
+    // Load the OldRuns.json from the assets folder
+//    private List<Activity> loadOldRunsFromAssets() {
+//        try {
+//            InputStream inputStream = getAssets().open("OldRuns.json");
+//            InputStreamReader reader = new InputStreamReader(inputStream);
+//            Gson gson = new Gson();
+//            return gson.fromJson(reader, new TypeToken<List<Activity>>(){}.getType());
+//        } catch (IOException e) {
+//            Log.e(TAG, "Failed to load old runs", e);
+//            return new ArrayList<>();
+//        }
+//    }
+
 
 
     // Get the corresponding day by name

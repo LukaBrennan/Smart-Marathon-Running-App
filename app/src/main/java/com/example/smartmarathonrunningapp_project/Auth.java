@@ -12,7 +12,7 @@ public class Auth extends AppCompatActivity
         initiateOAuth();
     }
     private void initiateOAuth()
-            // TODO - Only 1 runner is able to use, last iteration make this dynamic with a DataBase
+    // TODO - Only 1 runner is able to use, last iteration make this dynamic with a DataBase
     {
         String clientId = "136889"; // Taken form the apps strava info. allowing for runners to connect to it.
         // Redirect URI for OAuth

@@ -1,19 +1,25 @@
 package com.example.smartmarathonrunningapp_project;
 import android.annotation.SuppressLint;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 public class StravaRepository
 {
     private final StravaApiService apiService;
+    private static final String TAG = "StravaRepository";
 
+    private List<Activity> cachedActivities = new ArrayList<>();
     public StravaRepository()
     {
         Retrofit retrofit = new Retrofit.Builder()
@@ -27,8 +33,29 @@ public class StravaRepository
         long after = convertDateToUnixTimestamp(MainActivity.START_DATE);
         long before = convertDateToUnixTimestamp(MainActivity.END_DATE);
         // Logging
-        Log.d("StravaRepository", "Fetching activities between: " + MainActivity.START_DATE + " (" + after + ") and " + MainActivity.END_DATE + " (" + before + ")");
-        apiService.getUserActivities("Bearer " + accessToken, page, perPage, after, before).enqueue(callback);
+        Log.d(TAG, "Fetching activities between: " + MainActivity.START_DATE + " (" + after + ") and " + MainActivity.END_DATE + " (" + before + ")");
+        apiService.getUserActivities("Bearer " + accessToken, page, perPage, after, before)
+                .enqueue(new Callback<>()
+                {
+                    @Override
+                    public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response)
+                    {
+                        if (response.isSuccessful() && response.body() != null) {
+                            cachedActivities = response.body();
+                            callback.onResponse(call, response);
+                        }
+                    }
+                    @Override
+                    public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t) {
+                        Log.e(TAG, "API Call Failed", t);
+                        callback.onFailure(call, t);
+                    }
+                });
+    }
+
+    public List<Activity> getCachedActivities()
+    {
+        return cachedActivities;
     }
 
     // Helper method to convert date string to Unix timestamp
@@ -37,12 +64,11 @@ public class StravaRepository
         try
         {
             Date date = dateFormat.parse(dateStr);
-            assert date != null;
-            return date.getTime() / 1000; // Convert to seconds
+            return (date != null) ? date.getTime() / 1000 : 0;
         }
         catch (ParseException e)
         {
-            Log.e("StravaRepository", "Failed to parse date: " + dateStr, e);
+            Log.e(TAG, "Failed to parse date: " + dateStr, e);
             return 0;
         }
     }
