@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Objects;
 // Used to make asynchronous calls (API calls)
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -39,8 +40,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final String ERROR_LOG = "failed to parse date";  // Compliant
     private TrainingPlan trainingPlan; // Stores the loaded training plan
-    private final Map<String, Float> performanceData = new HashMap<>(); // keeps track of training performance
-
+    private final Map<String, Map<String, Float>> performanceData = new HashMap<>();
     // Constants for log tags and day names
     private static final String TAG = "MainActivity";
     private static final String MONDAY = "Monday";
@@ -71,6 +71,18 @@ public class MainActivity extends AppCompatActivity
         trainingPlan = loadTrainingPlanFromAssets();
 
         fetchAndCheckActivities();
+
+        btnFeedback.setOnClickListener(v -> {
+            Log.d(TAG, "Performance data before sending: " + performanceData);
+            if (performanceData.isEmpty()) {
+                Log.d(TAG, "No performance data to send!");
+            }
+
+            Intent intent = new Intent(MainActivity.this, FeedbackActivity.class);
+            intent.putExtra("performanceData", new Gson().toJson(performanceData));
+            startActivity(intent);
+        });
+
     }
 
     // Fetch activities from Strava and check compliance with the training plan
@@ -127,19 +139,34 @@ public class MainActivity extends AppCompatActivity
         List<Activity> oneRunPerDay = extractDailyRuns(filteredActivities);
         Log.d(TAG, "One run per day: " + oneRunPerDay.size());
 
-        updateTrainingPlan(oneRunPerDay);
-    }
+        // Process all activities, not just the first one
+        for (Activity activity : oneRunPerDay) {
+            String dayOfWeek = getDayOfWeek(activity.getStart_date());
+            TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
+            TrainingPlan.Day day = getDayByName(firstWeek, dayOfWeek);
 
-    private void updateTrainingPlan(List<Activity> oneRunPerDay) {
-        if (trainingPlan == null) {
-            Log.e(TAG, "Failed to load training plan.");
-            return;
+            if (day != null) {
+                boolean isCompleted = activityMatchesPlan(activity, day);
+                day.setCompleted(isCompleted);
+                if (isCompleted) {
+                    trackPerformance(activity, day, firstWeek.getWeek(), dayOfWeek);
+                }
+            }
         }
 
-        processFirstDayAndUpdateNextDay(oneRunPerDay, trainingPlan);
-        logUpdatedPlan(trainingPlan);
         updateUI(trainingPlan);
     }
+
+//    private void updateTrainingPlan(List<Activity> oneRunPerDay) {
+//        if (trainingPlan == null) {
+//            Log.e(TAG, "Failed to load training plan.");
+//            return;
+//        }
+//
+//        processFirstDayAndUpdateNextDay(oneRunPerDay, trainingPlan);
+//        logUpdatedPlan(trainingPlan);
+//        updateUI(trainingPlan);
+//    }
 
 
         // Process one run per day
@@ -217,88 +244,88 @@ public class MainActivity extends AppCompatActivity
 
     // MVP - calculate pace algorithm
     // Process the first day and update the next training day's pace
-    private void processFirstDayAndUpdateNextDay(List<Activity> activities, TrainingPlan trainingPlan)
-    {
-        if (activities.isEmpty() || trainingPlan == null)
-        {
-            Log.e(TAG, "No activities or training plan available.");
-            return;
-        }
-
-        // Get the first activity
-        Activity firstActivity = activities.get(0);
-        String firstActivityDay = getDayOfWeek(firstActivity.getStart_date());
-
-        // Find the corresponding day in the training plan
-        TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
-        assert firstActivityDay != null;
-        TrainingPlan.Day firstDay = getDayByName(firstWeek, firstActivityDay);
-        if (firstDay != null)
-        {
-            // Check compliance for the first day
-            boolean isCompleted = activityMatchesPlan(firstActivity, firstDay);
-            firstDay.setCompleted(isCompleted);
-            if (isCompleted)
-            {
-                Log.d(TAG, "First day (" + firstActivityDay + "): Completed - " + firstDay.getExercise());
-                // Track performance for the first day
-                trackPerformance(firstActivity, firstDay, firstWeek.getWeek(), firstActivityDay);
-                // Adjust pace for the next training day
-                adjustNextTrainingDayPace(firstWeek, firstActivityDay, firstActivity);
-            }
-            else
-            {
-                Log.d(TAG, "First day (" + firstActivityDay + "): Not completed - " + firstDay.getExercise());
-            }
-        }
-        else
-        {
-            Log.e(TAG, "No matching day found in the training plan for the first activity.");
-        }
-    }
+//    private void processFirstDayAndUpdateNextDay(List<Activity> activities, TrainingPlan trainingPlan)
+//    {
+//        if (activities.isEmpty() || trainingPlan == null)
+//        {
+//            Log.e(TAG, "No activities or training plan available.");
+//            return;
+//        }
+//
+//        // Get the first activity
+//        Activity firstActivity = activities.get(0);
+//        String firstActivityDay = getDayOfWeek(firstActivity.getStart_date());
+//
+//        // Find the corresponding day in the training plan
+//        TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
+//        assert firstActivityDay != null;
+//        TrainingPlan.Day firstDay = getDayByName(firstWeek, firstActivityDay);
+//        if (firstDay != null)
+//        {
+//            // Check compliance for the first day
+//            boolean isCompleted = activityMatchesPlan(firstActivity, firstDay);
+//            firstDay.setCompleted(isCompleted);
+//            if (isCompleted)
+//            {
+//                Log.d(TAG, "First day (" + firstActivityDay + "): Completed - " + firstDay.getExercise());
+//                // Track performance for the first day
+//                trackPerformance(firstActivity, firstDay, firstWeek.getWeek(), firstActivityDay);
+//                // Adjust pace for the next training day
+//                adjustNextTrainingDayPace(firstWeek, firstActivityDay, firstActivity);
+//            }
+//            else
+//            {
+//                Log.d(TAG, "First day (" + firstActivityDay + "): Not completed - " + firstDay.getExercise());
+//            }
+//        }
+//        else
+//        {
+//            Log.e(TAG, "No matching day found in the training plan for the first activity.");
+//        }
+//    }
     // Adjust pace for the next training day based on the first day's performance
-    private void adjustNextTrainingDayPace(TrainingPlan.TrainingWeek week, String currentDayName, Activity activity)
-    {
-        String nextDayName = getNextDayName(currentDayName);
-        assert nextDayName != null;
-        TrainingPlan.Day nextDay = getDayByName(week, nextDayName);
-
-        if (nextDay != null && nextDay.getPace() != null)
-        {
-            float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
-            float activityTime = activity.getMoving_time();
-
-            // Check for NAN values
-            if (activityDistanceMiles == 0 || activityTime == 0)
-            {
-                Log.e(TAG, "Invalid activity data: distance=" + activityDistanceMiles + ", time=" + activityTime);
-                return;
-            }
-
-            float averagePaceSecPerMile = activityTime / activityDistanceMiles;
-            float requiredPace = convertPaceToSeconds(nextDay.getPace());
-
-            if (averagePaceSecPerMile  < requiredPace)
-            {
-                // Runner is faster than the target pace
-                float newPace = requiredPace * 0.95f; // Increase pace by 5%
-                nextDay.setPace(convertSecondsToPace((int) newPace));
-                Log.d(TAG, "Next day (" + nextDayName + "): Increased pace to " + convertSecondsToPace((int) newPace));
-            }
-            else if (averagePaceSecPerMile  > requiredPace)
-            {
-                // Runner is slower than the target pace
-                float newPace = requiredPace * 1.05f; // Decrease pace by 5%
-                nextDay.setPace(convertSecondsToPace((int) newPace));
-                Log.d(TAG, "Next day (" + nextDayName + "): Decreased pace to " + convertSecondsToPace((int) newPace));
-            }
-        }
-        else
-        {
-            Log.e(TAG, "No valid next training day found.");
-        }
-    }
-    // Update the UI with the updated training plan
+//    private void adjustNextTrainingDayPace(TrainingPlan.TrainingWeek week, String currentDayName, Activity activity)
+//    {
+//        String nextDayName = getNextDayName(currentDayName);
+//        assert nextDayName != null;
+//        TrainingPlan.Day nextDay = getDayByName(week, nextDayName);
+//
+//        if (nextDay != null && nextDay.getPace() != null)
+//        {
+//            float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
+//            float activityTime = activity.getMoving_time();
+//
+//            // Check for NAN values
+//            if (activityDistanceMiles == 0 || activityTime == 0)
+//            {
+//                Log.e(TAG, "Invalid activity data: distance=" + activityDistanceMiles + ", time=" + activityTime);
+//                return;
+//            }
+//
+//            float averagePaceSecPerMile = activityTime / activityDistanceMiles;
+//            float requiredPace = convertPaceToSeconds(nextDay.getPace());
+//
+//            if (averagePaceSecPerMile  < requiredPace)
+//            {
+//                // Runner is faster than the target pace
+//                float newPace = requiredPace * 0.95f; // Increase pace by 5%
+//                nextDay.setPace(convertSecondsToPace((int) newPace));
+//                Log.d(TAG, "Next day (" + nextDayName + "): Increased pace to " + convertSecondsToPace((int) newPace));
+//            }
+//            else if (averagePaceSecPerMile  > requiredPace)
+//            {
+//                // Runner is slower than the target pace
+//                float newPace = requiredPace * 1.05f; // Decrease pace by 5%
+//                nextDay.setPace(convertSecondsToPace((int) newPace));
+//                Log.d(TAG, "Next day (" + nextDayName + "): Decreased pace to " + convertSecondsToPace((int) newPace));
+//            }
+//        }
+//        else
+//        {
+//            Log.e(TAG, "No valid next training day found.");
+//        }
+//    }
+//   Update the UI with the updated training plan
     @SuppressLint("SetTextI18n")
     private void updateUI(TrainingPlan trainingPlan)
     {
@@ -379,33 +406,33 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void logUpdatedPlan(TrainingPlan trainingPlan)
-    {
-        for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks())
-        {
-            Log.d(TAG, "Updated Plan - Week: " + week.getWeek());
+//    private void logUpdatedPlan(TrainingPlan trainingPlan)
+//    {
+//        for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks())
+//        {
+//            Log.d(TAG, "Updated Plan - Week: " + week.getWeek());
+//
+//            TrainingPlan.Days days = week.getTraining_plan();
+//            logDayPlan(days.getMonday(), MONDAY);
+//            logDayPlan(days.getTuesday(), TUESDAY);
+//            logDayPlan(days.getWednesday(), WEDNESDAY);
+//            logDayPlan(days.getThursday(), THURSDAY);
+//            logDayPlan(days.getFriday(), FRIDAY);
+//            logDayPlan(days.getSaturday(), SATURDAY);
+//            logDayPlan(days.getSunday(), SUNDAY);
+//        }
+//    }
 
-            TrainingPlan.Days days = week.getTraining_plan();
-            logDayPlan(days.getMonday(), MONDAY);
-            logDayPlan(days.getTuesday(), TUESDAY);
-            logDayPlan(days.getWednesday(), WEDNESDAY);
-            logDayPlan(days.getThursday(), THURSDAY);
-            logDayPlan(days.getFriday(), FRIDAY);
-            logDayPlan(days.getSaturday(), SATURDAY);
-            logDayPlan(days.getSunday(), SUNDAY);
-        }
-    }
-
-    private void logDayPlan(TrainingPlan.Day day, String dayName)
-    {
-        if (day == null)
-        {
-            Log.d(TAG, dayName + ": No plan");
-            return;
-        }
-        Log.d(TAG, dayName + ": " + day.getExercise() + " - " + day.getDistance() + " @ " + day.getPace());
-    }
-
+//    private void logDayPlan(TrainingPlan.Day day, String dayName)
+//    {
+//        if (day == null)
+//        {
+//            Log.d(TAG, dayName + ": No plan");
+//            return;
+//        }
+//        Log.d(TAG, dayName + ": " + day.getExercise() + " - " + day.getDistance() + " @ " + day.getPace());
+//    }
+//
     private boolean activityMatchesPlan(Activity activity, TrainingPlan.Day day)
     {
         Log.d(TAG, "Checking activity: " + activity.getType() + ", " + activity.getDistance() + " meters, " + activity.getMoving_time() + "s");
@@ -432,31 +459,45 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void trackPerformance(Activity activity, TrainingPlan.Day day, String week, String dayName)
-    {
-
+    private void trackPerformance(Activity activity, TrainingPlan.Day day, String week, String dayName) {
         float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
         float activityTime = activity.getMoving_time();
         float averagePaceSecPerMile = activityTime / activityDistanceMiles;
-        performanceData.put(week + " - " + dayName, averagePaceSecPerMile);
-        for (Map.Entry<String, Float> entry : performanceData.entrySet())
-        {
-            Log.d(TAG, "Performance Data for " + entry.getKey() + ": " + entry.getValue());
+
+        // Store week along with performance data (new structure)
+        String weekKey = "Week " + week;
+        if (!performanceData.containsKey(weekKey)) {
+            performanceData.put(weekKey, new HashMap<>());
+        }
+        Objects.requireNonNull(performanceData.get(weekKey)).put(dayName, averagePaceSecPerMile);
+
+        // Keep the date-based logging (optional)
+        String dateKey = activity.getStart_date().split("T")[0] + " - " + dayName;
+        Log.d(TAG, dateKey + ": Average Pace = " + convertSecondsToPace((int) averagePaceSecPerMile));
+
+        // Log all performance data (updated for new structure)
+        for (Map.Entry<String, Map<String, Float>> weekEntry : performanceData.entrySet()) {
+            for (Map.Entry<String, Float> dayEntry : weekEntry.getValue().entrySet()) {
+                Log.d(TAG, "Performance Data for " + weekEntry.getKey() + " - " +
+                        dayEntry.getKey() + ": " + dayEntry.getValue());
+            }
         }
 
+        // Log detailed performance info (unchanged)
+        Log.d(TAG, week + ", " + dayName + ": Average Pace = " +
+                convertSecondsToPace((int) averagePaceSecPerMile) + " min/mile");
+        Log.d(TAG, "Distance: " + activityDistanceMiles + " miles (" +
+                activity.getDistance() + " meters)");
+        Log.d(TAG, week + ", " + dayName + ": Average Heart Rate = " +
+                activity.getAverage_heartrate());
 
-        // Log performance data
-        Log.d(TAG,  week + ", " + dayName + ": Average Pace = " + convertSecondsToPace((int) averagePaceSecPerMile) + " min/mile");
-        Log.d(TAG, "Distance: " + activityDistanceMiles + " miles (" + activity.getDistance() + " meters)");
-        Log.d(TAG, week + ", " + dayName + ": Average Heart Rate = " + activity.getAverage_heartrate());
-
-        // Adjust pace based on heart rate
-        if (isHeartRateTooHigh(activity))
-        {
+        // Adjust pace based on heart rate (unchanged)
+        if (isHeartRateTooHigh(activity)) {
             float requiredPace = convertPaceToSeconds(day.getPace());
             float newPace = requiredPace * 1.05f; // Decrease pace by 5%
             day.setPace(convertSecondsToPace((int) newPace));
-            Log.d(TAG, "Week " + week + ", " + dayName + ": Decreased pace to " + convertSecondsToPace((int) newPace) + " due to high heart rate");
+            Log.d(TAG, "Week " + week + ", " + dayName + ": Decreased pace to " +
+                    convertSecondsToPace((int) newPace) + " due to high heart rate");
         }
     }
 
