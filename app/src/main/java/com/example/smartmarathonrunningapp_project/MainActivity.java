@@ -8,48 +8,31 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-// used for parsing JSON data into Java objects
+import com.example.smartmarathonrunningapp_project.managers.TrainingPlanManager;
+import com.example.smartmarathonrunningapp_project.processors.ActivityProcessor;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-// Handle file reading from assets folder
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-// Parse and format dates
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-// Data structures and locale settings
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Objects;
-// Used to make asynchronous calls (API calls)
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import com.example.smartmarathonrunningapp_project.utils.DateUtils;
+import com.example.smartmarathonrunningapp_project.utils.PaceUtils;
 
+    // Main activity that coordinates training plan tracking and Strava integration
 public class MainActivity extends AppCompatActivity
-{
-    private StravaRepository stravaRepository; // Manage API calls to Strava
-    // Dates for getting STRAVA data
+    {
+    private static final String TAG = "MainActivity";
     public static final String START_DATE = "2023-08-07";
     public static final String END_DATE = "2023-10-29";
 
-    private static final String ERROR_LOG = "failed to parse date";  // Compliant
-    private TrainingPlan trainingPlan; // Stores the loaded training plan
+    // Dependencies
+    private StravaRepository stravaRepository;
+    private TrainingPlanManager planManager;
+    private ActivityProcessor activityProcessor;
     private final Map<String, Map<String, Float>> performanceData = new HashMap<>();
-    // Constants for log tags and day names
-    private static final String TAG = "MainActivity";
-    private static final String MONDAY = "Monday";
-    private static final String TUESDAY = "Tuesday";
-    private static final String WEDNESDAY = "Wednesday";
-    private static final String THURSDAY = "Thursday";
-    private static final String FRIDAY = "Friday";
-    private static final String SATURDAY = "Saturday";
-    private static final String SUNDAY = "Sunday";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -57,509 +40,173 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button btnFeedback = findViewById(R.id.feedbackButton);
-        btnFeedback.setOnClickListener(v -> {
-            // Pass the performance data to FeedbackActivity
-            Intent intent = new Intent(MainActivity.this, FeedbackActivity.class);
-            intent.putExtra("performanceData", new Gson().toJson(performanceData));
-            startActivity(intent);
-        });
-
-        stravaRepository = new StravaRepository();
-
-        // Load the training plan from assets
-        trainingPlan = loadTrainingPlanFromAssets();
-
+        initializeDependencies();
+        setupUI();
         fetchAndCheckActivities();
-
-        btnFeedback.setOnClickListener(v -> {
-            Log.d(TAG, "Performance data before sending: " + performanceData);
-            if (performanceData.isEmpty()) {
-                Log.d(TAG, "No performance data to send!");
-            }
-
-            Intent intent = new Intent(MainActivity.this, FeedbackActivity.class);
-            intent.putExtra("performanceData", new Gson().toJson(performanceData));
-            startActivity(intent);
-        });
-
     }
 
-    // Fetch activities from Strava and check compliance with the training plan
-    private void fetchAndCheckActivities() {
-        stravaRepository.refreshAccessToken(new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    Log.e(TAG, "Failed to refresh token. Response code: " + response.code());
-                    return;
-                }
-
-                String accessToken = response.body().getAccessToken();
-                Log.d(TAG, "Access token refreshed: " + accessToken);
-                fetchActivities(accessToken);
-            }
-            @Override
-            public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t) {
-                Log.e(TAG, "Token refresh failed", t);
-            }
-        });
-    }
-
-    private void fetchActivities(String accessToken) {
-        stravaRepository.fetchActivities(accessToken, 1, 100, new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    Log.e(TAG, "Failed to fetch activities. Response code: " + response.code());
-                    return;
-                }
-
-                List<Activity> activities = response.body();
-                Log.d(TAG, "Fetched activities: " + activities.size());
-
-                processActivities(activities);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t) {
-                Log.e(TAG, "Failed to fetch activities", t);
-            }
-        });
-    }
-
-    private void processActivities(List<Activity> activities) {
-        for (Activity activity : activities) {
-            Log.d(TAG, "Activity: " + activity.getName() + ", Date: " + activity.getStart_date());
-        }
-
-        List<Activity> filteredActivities = filterActivitiesByDate(activities);
-        Log.d(TAG, "Filtered activities: " + filteredActivities.size());
-
-        List<Activity> oneRunPerDay = extractDailyRuns(filteredActivities);
-        Log.d(TAG, "One run per day: " + oneRunPerDay.size());
-
-        // Process all activities, not just the first one
-        for (Activity activity : oneRunPerDay) {
-            String dayOfWeek = getDayOfWeek(activity.getStart_date());
-            TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
-            TrainingPlan.Day day = getDayByName(firstWeek, dayOfWeek);
-
-            if (day != null) {
-                boolean isCompleted = activityMatchesPlan(activity, day);
-                day.setCompleted(isCompleted);
-                if (isCompleted) {
-                    trackPerformance(activity, day, firstWeek.getWeek(), dayOfWeek);
-                }
-            }
-        }
-
-        updateUI(trainingPlan);
-    }
-
-//    private void updateTrainingPlan(List<Activity> oneRunPerDay) {
-//        if (trainingPlan == null) {
-//            Log.e(TAG, "Failed to load training plan.");
-//            return;
-//        }
-//
-//        processFirstDayAndUpdateNextDay(oneRunPerDay, trainingPlan);
-//        logUpdatedPlan(trainingPlan);
-//        updateUI(trainingPlan);
-//    }
-
-
-        // Process one run per day
-    List<Activity> extractDailyRuns(List<Activity> activities)
-        {
-        Map<String, Activity> runsByDate = new HashMap<>();
-        for (Activity activity : activities)
-        {
-            String activityDate = activity.getStart_date().split("T")[0]; // Extract date part (e.g., "2023-08-07")
-            runsByDate.putIfAbsent(activityDate, activity); // Add the first run for each date if not present
-            }
-            return new ArrayList<>(runsByDate.values());
-        }
-
-
-    // Load the TrainingPlan.json from the assets folder
-    private TrainingPlan loadTrainingPlanFromAssets()
+    private void initializeDependencies()
     {
-        try
-        {
-            InputStream inputStream = getAssets().open("TrainingPlan.json");
-            InputStreamReader reader = new InputStreamReader(inputStream);
-            Gson gson = new Gson();
-            TrainingPlan plan = gson.fromJson(reader, TrainingPlan.class);
-            Log.d(TAG, "Training plan loaded: " + (plan != null));
-            return plan;
-        }
-        catch (IOException e)
-        {
-            Log.e(TAG, "Failed to load training plan", e);
-            return null;
-        }
+        stravaRepository = new StravaRepository();
+        planManager = new TrainingPlanManager(this);
+        activityProcessor = new ActivityProcessor();
     }
 
-
-    // Load the OldRuns.json from the assets folder
-//    private List<Activity> loadOldRunsFromAssets() {
-//        try {
-//            InputStream inputStream = getAssets().open("OldRuns.json");
-//            InputStreamReader reader = new InputStreamReader(inputStream);
-//            Gson gson = new Gson();
-//            return gson.fromJson(reader, new TypeToken<List<Activity>>(){}.getType());
-//        } catch (IOException e) {
-//            Log.e(TAG, "Failed to load old runs", e);
-//            return new ArrayList<>();
-//        }
-//    }
-
-
-
-    // Get the corresponding day by name
-    private TrainingPlan.Day getDayByName(TrainingPlan.TrainingWeek week, String dayName) {
-        Map<String, TrainingPlan.Day> dayMap = Map.of(
-                MONDAY, week.getTraining_plan().getMonday(),
-                TUESDAY, week.getTraining_plan().getTuesday(),
-                WEDNESDAY, week.getTraining_plan().getWednesday(),
-                THURSDAY, week.getTraining_plan().getThursday(),
-                FRIDAY, week.getTraining_plan().getFriday(),
-                SATURDAY, week.getTraining_plan().getSaturday(),
-                SUNDAY, week.getTraining_plan().getSunday()
-        );
-        return dayMap.getOrDefault(dayName, null);
-    }
-
-    // Get the next training day's name
-    private static final List<String> WEEK_DAYS =
-            List.of(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY);
-
-    private String getNextDayName(String currentDayName)
+    private void setupUI()
     {
-        int index = WEEK_DAYS.indexOf(currentDayName);
-        return (index == -1 || index == WEEK_DAYS.size() - 1) ? MONDAY : WEEK_DAYS.get(index + 1);
+        Button btnFeedback = findViewById(R.id.feedbackButton);
+        btnFeedback.setOnClickListener(v -> launchFeedbackActivity());
     }
 
+    private void launchFeedbackActivity()
+    {
+        Log.d(TAG, "Sending performance data: " + performanceData);
+        Intent intent = new Intent(this, FeedbackActivity.class);
+        intent.putExtra("performanceData", new Gson().toJson(performanceData));
+        startActivity(intent);
+    }
 
-    // MVP - calculate pace algorithm
-    // Process the first day and update the next training day's pace
-//    private void processFirstDayAndUpdateNextDay(List<Activity> activities, TrainingPlan trainingPlan)
-//    {
-//        if (activities.isEmpty() || trainingPlan == null)
-//        {
-//            Log.e(TAG, "No activities or training plan available.");
-//            return;
-//        }
-//
-//        // Get the first activity
-//        Activity firstActivity = activities.get(0);
-//        String firstActivityDay = getDayOfWeek(firstActivity.getStart_date());
-//
-//        // Find the corresponding day in the training plan
-//        TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
-//        assert firstActivityDay != null;
-//        TrainingPlan.Day firstDay = getDayByName(firstWeek, firstActivityDay);
-//        if (firstDay != null)
-//        {
-//            // Check compliance for the first day
-//            boolean isCompleted = activityMatchesPlan(firstActivity, firstDay);
-//            firstDay.setCompleted(isCompleted);
-//            if (isCompleted)
-//            {
-//                Log.d(TAG, "First day (" + firstActivityDay + "): Completed - " + firstDay.getExercise());
-//                // Track performance for the first day
-//                trackPerformance(firstActivity, firstDay, firstWeek.getWeek(), firstActivityDay);
-//                // Adjust pace for the next training day
-//                adjustNextTrainingDayPace(firstWeek, firstActivityDay, firstActivity);
-//            }
-//            else
-//            {
-//                Log.d(TAG, "First day (" + firstActivityDay + "): Not completed - " + firstDay.getExercise());
-//            }
-//        }
-//        else
-//        {
-//            Log.e(TAG, "No matching day found in the training plan for the first activity.");
-//        }
-//    }
-    // Adjust pace for the next training day based on the first day's performance
-//    private void adjustNextTrainingDayPace(TrainingPlan.TrainingWeek week, String currentDayName, Activity activity)
-//    {
-//        String nextDayName = getNextDayName(currentDayName);
-//        assert nextDayName != null;
-//        TrainingPlan.Day nextDay = getDayByName(week, nextDayName);
-//
-//        if (nextDay != null && nextDay.getPace() != null)
-//        {
-//            float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
-//            float activityTime = activity.getMoving_time();
-//
-//            // Check for NAN values
-//            if (activityDistanceMiles == 0 || activityTime == 0)
-//            {
-//                Log.e(TAG, "Invalid activity data: distance=" + activityDistanceMiles + ", time=" + activityTime);
-//                return;
-//            }
-//
-//            float averagePaceSecPerMile = activityTime / activityDistanceMiles;
-//            float requiredPace = convertPaceToSeconds(nextDay.getPace());
-//
-//            if (averagePaceSecPerMile  < requiredPace)
-//            {
-//                // Runner is faster than the target pace
-//                float newPace = requiredPace * 0.95f; // Increase pace by 5%
-//                nextDay.setPace(convertSecondsToPace((int) newPace));
-//                Log.d(TAG, "Next day (" + nextDayName + "): Increased pace to " + convertSecondsToPace((int) newPace));
-//            }
-//            else if (averagePaceSecPerMile  > requiredPace)
-//            {
-//                // Runner is slower than the target pace
-//                float newPace = requiredPace * 1.05f; // Decrease pace by 5%
-//                nextDay.setPace(convertSecondsToPace((int) newPace));
-//                Log.d(TAG, "Next day (" + nextDayName + "): Decreased pace to " + convertSecondsToPace((int) newPace));
-//            }
-//        }
-//        else
-//        {
-//            Log.e(TAG, "No valid next training day found.");
-//        }
-//    }
-//   Update the UI with the updated training plan
+    private void fetchAndCheckActivities()
+    {
+        stravaRepository.refreshAccessToken(new TokenRefreshCallback());
+    }
+
+    private void processActivity(Activity activity, TrainingPlan trainingPlan)
+    {
+        String dayOfWeek = DateUtils.getDayOfWeek(activity.getStart_date());
+        TrainingPlan.TrainingWeek firstWeek = trainingPlan.getTraining_weeks().get(0);
+        TrainingPlan.Day day = TrainingPlanManager.getDayByName(firstWeek, dayOfWeek);
+
+        if (day != null && activityProcessor.activityMatchesPlan(activity, day))
+        {
+            day.setCompleted(true);
+            trackPerformance(activity, day, firstWeek.getWeek(), dayOfWeek);
+        }
+    }
+    private void trackPerformance(Activity activity, TrainingPlan.Day day, String week, String dayName)
+    {
+        float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
+        float activityTime = activity.getMoving_time();
+        float averagePaceSecPerMile = activityTime / activityDistanceMiles;
+        performanceData
+                .computeIfAbsent("Week " + week, k -> new HashMap<>())
+                .put(dayName, averagePaceSecPerMile);
+        adjustPaceForHeartRate(activity, day);
+    }
+    private void adjustPaceForHeartRate(Activity activity, TrainingPlan.Day day)
+    {
+        if (activity.getAverage_heartrate() > 160)
+        {
+            float requiredPace = PaceUtils.convertPaceToSeconds(day.getPace());
+            float newPace = requiredPace * 1.05f;
+            day.setPace(PaceUtils.convertSecondsToPace((int) newPace));
+        }
+    }
     @SuppressLint("SetTextI18n")
     private void updateUI(TrainingPlan trainingPlan)
     {
         LinearLayout weekContainer = findViewById(R.id.weekContainer);
         weekContainer.removeAllViews();
-
         for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks())
         {
-            // Add a TextView for the week
-            TextView weekTextView = new TextView(this);
-            weekTextView.setText("Week: " + week.getWeek());
-            weekTextView.setTextSize(18);
-            weekTextView.setPadding(0, 16, 0, 8);
-            weekContainer.addView(weekTextView);
-
-            // Add TextViews for each day
-            addDayTextView(week.getTraining_plan().getMonday(), MONDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getTuesday(), TUESDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getWednesday(), WEDNESDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getThursday(), THURSDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getFriday(), FRIDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getSaturday(), SATURDAY, weekContainer);
-            addDayTextView(week.getTraining_plan().getSunday(), SUNDAY, weekContainer);
+            addWeekView(weekContainer, week);
+            addDayViews(weekContainer, week);
         }
     }
 
-    // Add a TextView for a specific day
     @SuppressLint("SetTextI18n")
-    private void addDayTextView(TrainingPlan.Day day, String dayName, LinearLayout container)
+    private void addWeekView(LinearLayout container, TrainingPlan.TrainingWeek week)
+    {
+        TextView weekTextView = new TextView(this);
+        weekTextView.setText("Week: " + week.getWeek());
+        weekTextView.setTextSize(18);
+        weekTextView.setPadding(0, 16, 0, 8);
+        container.addView(weekTextView);
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void addDayViews(LinearLayout container, TrainingPlan.TrainingWeek week)
+    {
+        addDayView(container, week.getTraining_plan().getMonday(), "Monday");
+        addDayView(container, week.getTraining_plan().getTuesday(), "Tuesday");
+        addDayView(container, week.getTraining_plan().getWednesday(), "Wednesday");
+        addDayView(container, week.getTraining_plan().getThursday(), "Thursday");
+        addDayView(container, week.getTraining_plan().getFriday(), "Friday");
+        addDayView(container, week.getTraining_plan().getSaturday(), "Saturday");
+        addDayView(container, week.getTraining_plan().getSunday(), "Sunday");
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void addDayView(LinearLayout container, TrainingPlan.Day day, String dayName)
     {
         if (day != null)
         {
             TextView dayTextView = new TextView(this);
-            String distanceDisplay = day.getDistance();
-            dayTextView.setText(dayName + ": " + day.getExercise() + " - " + distanceDisplay + " @ " + day.getPace());
+            dayTextView.setText(dayName + ": " + day.getExercise() + " - " +
+                    day.getDistance() + " @ " + day.getPace());
             dayTextView.setTextSize(16);
             dayTextView.setPadding(16, 8, 16, 8);
             container.addView(dayTextView);
         }
     }
-
-
-    // Parse pace string (e.g., "8:00") to seconds
-    private int convertPaceToSeconds(String pace)
-    {
-        if (pace == null || pace.isEmpty() || !pace.matches("\\d+:\\d{2}"))
+     //Handles token refresh response and initiates activities fetch
+    private final class TokenRefreshCallback implements Callback<TokenResponse>
+     {
+        @Override
+        public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response)
         {
-            Log.e(TAG, "Invalid pace format: " + pace);
-            return 0;
-        }
-        String[] parts = pace.split(":");
-        return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
-    }
-
-    // Format time in seconds to "mm:ss"
-    @SuppressLint("DefaultLocale")
-    private String convertSecondsToPace(int timeInSeconds)
-    {
-        int minutes = timeInSeconds / 60;
-        int seconds = timeInSeconds % 60;
-        return String.format("%d:%02d", minutes, seconds);
-    }
-
-    // Helper method to get the day of the week from a date string
-    private String getDayOfWeek(String date)
-    {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try
-        {
-            Date activityDate = dateFormat.parse(date);
-            @SuppressLint("SimpleDateFormat") SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE");
-            return dayFormat.format(activityDate);
-        }
-        catch (ParseException e)
-        {
-            Log.e(TAG, ERROR_LOG + date, e);
-            return null;
-        }
-    }
-
-//    private void logUpdatedPlan(TrainingPlan trainingPlan)
-//    {
-//        for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks())
-//        {
-//            Log.d(TAG, "Updated Plan - Week: " + week.getWeek());
-//
-//            TrainingPlan.Days days = week.getTraining_plan();
-//            logDayPlan(days.getMonday(), MONDAY);
-//            logDayPlan(days.getTuesday(), TUESDAY);
-//            logDayPlan(days.getWednesday(), WEDNESDAY);
-//            logDayPlan(days.getThursday(), THURSDAY);
-//            logDayPlan(days.getFriday(), FRIDAY);
-//            logDayPlan(days.getSaturday(), SATURDAY);
-//            logDayPlan(days.getSunday(), SUNDAY);
-//        }
-//    }
-
-//    private void logDayPlan(TrainingPlan.Day day, String dayName)
-//    {
-//        if (day == null)
-//        {
-//            Log.d(TAG, dayName + ": No plan");
-//            return;
-//        }
-//        Log.d(TAG, dayName + ": " + day.getExercise() + " - " + day.getDistance() + " @ " + day.getPace());
-//    }
-//
-    private boolean activityMatchesPlan(Activity activity, TrainingPlan.Day day)
-    {
-        Log.d(TAG, "Checking activity: " + activity.getType() + ", " + activity.getDistance() + " meters, " + activity.getMoving_time() + "s");
-        // Compare activity details with the training plan
-        if (!activity.getType().equals("Run"))
-        {
-            Log.d(TAG, "Activity type does not match: " + activity.getType());
-            return false; // Only running activities count
-        }
-
-        // Check pace (if applicable)
-        if (day.getPace() != null)
-        {
-            float activityPace = activity.getMoving_time() / activity.getDistance(); // Pace in seconds per unit distance
-            float requiredPace = convertPaceToSeconds(day.getPace());
-            if (activityPace > requiredPace)
+            if (response.isSuccessful() && response.body() != null)
             {
-                Log.d(TAG, "Activity pace is too slow: " + activityPace + " > " + requiredPace);
-                return false; // Pace is too slow
+                stravaRepository.fetchActivities(response.body().getAccessToken(), 1, 100, new ActivitiesCallback());
             }
-        }
-
-        Log.d(TAG, "Activity matches the plan");
-        return true;
-    }
-
-    private void trackPerformance(Activity activity, TrainingPlan.Day day, String week, String dayName) {
-        float activityDistanceMiles = UnitConverter.metersToMiles(activity.getDistance());
-        float activityTime = activity.getMoving_time();
-        float averagePaceSecPerMile = activityTime / activityDistanceMiles;
-
-        // Store week along with performance data (new structure)
-        String weekKey = "Week " + week;
-        if (!performanceData.containsKey(weekKey)) {
-            performanceData.put(weekKey, new HashMap<>());
-        }
-        Objects.requireNonNull(performanceData.get(weekKey)).put(dayName, averagePaceSecPerMile);
-
-        // Keep the date-based logging (optional)
-        String dateKey = activity.getStart_date().split("T")[0] + " - " + dayName;
-        Log.d(TAG, dateKey + ": Average Pace = " + convertSecondsToPace((int) averagePaceSecPerMile));
-
-        // Log all performance data (updated for new structure)
-        for (Map.Entry<String, Map<String, Float>> weekEntry : performanceData.entrySet()) {
-            for (Map.Entry<String, Float> dayEntry : weekEntry.getValue().entrySet()) {
-                Log.d(TAG, "Performance Data for " + weekEntry.getKey() + " - " +
-                        dayEntry.getKey() + ": " + dayEntry.getValue());
-            }
-        }
-
-        // Log detailed performance info (unchanged)
-        Log.d(TAG, week + ", " + dayName + ": Average Pace = " +
-                convertSecondsToPace((int) averagePaceSecPerMile) + " min/mile");
-        Log.d(TAG, "Distance: " + activityDistanceMiles + " miles (" +
-                activity.getDistance() + " meters)");
-        Log.d(TAG, week + ", " + dayName + ": Average Heart Rate = " +
-                activity.getAverage_heartrate());
-
-        // Adjust pace based on heart rate (unchanged)
-        if (isHeartRateTooHigh(activity)) {
-            float requiredPace = convertPaceToSeconds(day.getPace());
-            float newPace = requiredPace * 1.05f; // Decrease pace by 5%
-            day.setPace(convertSecondsToPace((int) newPace));
-            Log.d(TAG, "Week " + week + ", " + dayName + ": Decreased pace to " +
-                    convertSecondsToPace((int) newPace) + " due to high heart rate");
-        }
-    }
-
-    private boolean isHeartRateTooHigh(Activity activity)
-    {
-        float averageHeartRate = activity.getAverage_heartrate();
-        int targetMaxHeartRate = 160; // Need to refine this part
-        return averageHeartRate > targetMaxHeartRate;
-    }
-
-    private Date parseDate(String dateStr)
-    {
-        try
-        {
-            // Try parsing with both formats and return the result
-            return tryParseWithFormats(dateStr);
-        }
-        catch (ParseException e)
-        {
-            Log.e(TAG, ERROR_LOG + dateStr, e);
-            return null;
-        }
-    }
-
-    // Separate method to handle parsing with the different formats
-    private Date tryParseWithFormats(String dateStr) throws ParseException
-    {
-        SimpleDateFormat dateFormatWithTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
-        SimpleDateFormat dateFormatWithDateOnly = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        // First attempt to parse with the full format
-        try
-        {
-            return dateFormatWithTime.parse(dateStr);
-        }
-        // If it fails, try parsing with the date-only format
-        catch (ParseException e)
-        {
-            return dateFormatWithDateOnly.parse(dateStr);
-        }
-    }
-
-
-    private List<Activity> filterActivitiesByDate(List<Activity> activities)
-    {
-        List<Activity> filteredActivities = new ArrayList<>();
-
-        Date startDate = parseDate(MainActivity.START_DATE);
-        Date endDate = parseDate(MainActivity.END_DATE);
-        // Filtering null dates
-        if (startDate == null || endDate == null) {
-            Log.e(TAG, "Invalid date range. Skipping filtering.");
-            return filteredActivities;
-        }
-
-        for (Activity activity : activities)
-        {
-            Date activityDate = parseDate(activity.getStart_date());
-            if (activityDate != null && !activityDate.before(startDate) && !activityDate.after(endDate))
+            else
             {
-                filteredActivities.add(activity);
+                Log.e(TAG, "Token refresh failed. Code: " + response.code());
             }
         }
-        return filteredActivities;
+        @Override
+        public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t)
+        {
+            Log.e(TAG, "Token refresh failed", t);
+        }
+    }
+    // Handles activities fetch response and processes the data
+    private final class ActivitiesCallback implements Callback<List<Activity>>
+    {
+        @Override
+        public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response)
+        {
+            if (response.isSuccessful() && response.body() != null)
+            {
+                processFetchedActivities(response.body());
+            }
+            else
+            {
+                Log.e(TAG, "Failed to fetch activities. Code: " + response.code());
+            }
+        }
+        @Override
+        public void onFailure(@NonNull Call<List<Activity>> call, @NonNull Throwable t)
+        {
+            Log.e(TAG, "Failed to fetch activities", t);
+        }
+        private void processFetchedActivities(List<Activity> activities)
+        {
+            TrainingPlan trainingPlan = planManager.loadTrainingPlanFromAssets();
+            if (trainingPlan == null || trainingPlan.getTraining_weeks().isEmpty())
+            {
+                Log.e(TAG, "Failed to load training plan");
+                return;
+            }
+            Date startDate = DateUtils.parseDate(START_DATE);
+            Date endDate = DateUtils.parseDate(END_DATE);
+            List<Activity> filteredActivities = activityProcessor.filterActivitiesByDate(activities, startDate, endDate);
+            List<Activity> dailyRuns = activityProcessor.extractDailyRuns(filteredActivities);
+            for (Activity activity : dailyRuns)
+            {
+                processActivity(activity, trainingPlan);
+            }
+            updateUI(trainingPlan);
+        }
     }
 }
