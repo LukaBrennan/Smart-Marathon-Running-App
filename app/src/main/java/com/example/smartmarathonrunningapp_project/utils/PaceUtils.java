@@ -1,6 +1,6 @@
 package com.example.smartmarathonrunningapp_project.utils;
+import android.annotation.SuppressLint;
 import android.util.Log;
-
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -54,5 +54,12 @@ public class PaceUtils
         int minutes = timeInSeconds / 60;
         int seconds = timeInSeconds % 60;
         return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
+    }
+
+    @SuppressLint("DefaultLocale")
+    public static String formatPaceDifference(float secondsDiff) {
+        int minutes = (int) (secondsDiff / 60);
+        int seconds = (int) (secondsDiff % 60);
+        return String.format("%s%d:%02d",secondsDiff >= 0 ? "+" : "-",Math.abs(minutes),Math.abs(seconds));
     }
 }

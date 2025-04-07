@@ -12,6 +12,9 @@ import java.util.Map;
 // Processes Strava activity data to filter and analyze running activities
 public class ActivityProcessor
 {
+
+    public static final float MIN_RUN_DISTANCE = 5000; // 5km in meters
+    public static final float MIN_RUN_DURATION = 20 * 60; // 20 minutes in seconds
     // Filters activities to only those within the specified date range, For testing using OldRuns.JSON
     public List<Activity> filterActivitiesByDate(List<Activity> activities, Date startDate, Date endDate)
     {
@@ -54,5 +57,21 @@ public class ActivityProcessor
             return activityPace <= requiredPace;
         }
         return true;
+    }
+    public List<Activity> filterValidRuns(List<Activity> activities) {
+        List<Activity> validRuns = new ArrayList<>();
+        for (Activity activity : activities) {
+            if (isValidRun(activity)) {
+                validRuns.add(activity);
+            }
+        }
+        return validRuns;
+    }
+
+    private boolean isValidRun(Activity activity) {
+        return "Run".equals(activity.getType()) &&
+                activity.getDistance() >= MIN_RUN_DISTANCE &&
+                activity.getMoving_time() >= MIN_RUN_DURATION &&
+                activity.getAverage_heartrate() > 0;
     }
 }

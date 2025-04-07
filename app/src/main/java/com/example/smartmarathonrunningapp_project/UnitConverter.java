@@ -15,7 +15,7 @@ public class UnitConverter
     }
 
     public static float milesToMeters(float miles) {
-        return miles * MILES_TO_METERS;
+        return miles / MILES_TO_METERS;
     }
 
     // Pace conversions
