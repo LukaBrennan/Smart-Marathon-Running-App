@@ -14,7 +14,6 @@ import com.google.gson.Gson;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         private void launchFeedbackActivity() {
             Log.d(TAG, "Sending performance data: " + performanceData);
+            Log.d("MainActivity", "Sending performance data: " + new Gson().toJson(performanceData));
             Intent intent = new Intent(this, FeedbackActivity.class);
             intent.putExtra("performanceData", new Gson().toJson(performanceData));
             startActivity(intent);

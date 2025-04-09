@@ -1,6 +1,7 @@
 package com.example.smartmarathonrunningapp_project.processors;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 
 import com.example.smartmarathonrunningapp_project.Activity;
 import com.example.smartmarathonrunningapp_project.utils.DateUtils;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 public class ProgressiveFitnessAnalyzer {
 
     public List<WeeklyReport> generateWeeklyReports(List<Activity> allActivities) {
+        Log.d("ProgressiveFitnessAnalyzer", "Generating weekly reports for " + (allActivities != null ? allActivities.size() : "null") + " activities");
         List<WeeklyReport> reports = new ArrayList<>();
         ActivityProcessor processor = new ActivityProcessor();
 

@@ -32,6 +32,7 @@ public class FeedbackActivity extends AppCompatActivity {
 
         // 1. Add performance data analysis if available
         String performanceDataJson = getIntent().getStringExtra("performanceData");
+        Log.d("FeedbackActivity", "Received performanceDataJson: " + performanceDataJson);
         if (performanceDataJson != null) {
             combinedFeedback.append(analyzePerformanceData(performanceDataJson));
             combinedFeedback.append("\n\n——————————————————————\n\n");
@@ -92,6 +93,13 @@ public class FeedbackActivity extends AppCompatActivity {
         List<WeeklyReport> weeklyReports = analyzer.generateWeeklyReports(
                 stravaRepository.getCachedActivities() // Now using instance method
         );
+
+        List<Activity> cachedActivities = stravaRepository.getCachedActivities();
+        Log.d("FeedbackActivity", "Cached activities count: " + (cachedActivities != null ? cachedActivities.size() : "null"));
+
+        if (cachedActivities == null || cachedActivities.isEmpty()) {
+            return "No training data available for progressive analysis";
+        }
 
         if (weeklyReports.isEmpty()) {
             return "No training data available for progressive analysis";

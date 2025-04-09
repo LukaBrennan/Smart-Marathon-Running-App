@@ -65,6 +65,7 @@ public class StravaRepository
 
     public List<Activity> getCachedActivities()
     {
+        Log.d("StravaRepository", "Returning " + (cachedActivities != null ? cachedActivities.size() : "null") + " cached activities.");
         return cachedActivities;
     }
 
