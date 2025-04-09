@@ -17,4 +17,6 @@
     <string name="recovery_8_per_mile">recovery 8\' per mile</string>
     <string name="medium_long_run_first_third_7_40_second_7_20_last_third_7_00_per_mile">medium/long run first third 7\'40\'\', second 7\'20\'\', last third 7\'00\'\' per mile</string>
     <string name="feedback_report">Feedback Report</string>
+    <string name="twelve_week_plan">12-Week Training Plan</string>
+    <string name="show_feedback">Show Feedback</string>
 </resources>

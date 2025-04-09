@@ -1,79 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="16dp"
-    android:background="#F5F5F5">
+    android:background="@color/light_gray">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
+        <!-- Header Section -->
         <TextView
             android:id="@+id/headerTextView"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Training Plan"
+            android:text="@string/training_plan"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:paddingBottom="16dp"
             android:textColor="#333"
-            tools:ignore="HardcodedText" />
+            android:gravity="center"
+            android:paddingBottom="16dp"/>
 
-        <TextView
-            android:id="@+id/activityTextView"
+        <!-- Training Plan Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="12-Week Training Plan"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:paddingTop="16dp"
-            android:textColor="#000"
-            tools:ignore="HardcodedText" />
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            android:background="@android:color/white">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/activityTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/twelve_week_plan"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#000"
+                    android:paddingBottom="8dp"/>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@android:color/darker_gray"
+                    android:layout_marginBottom="8dp"/>
+
+                <!-- Week Training Container -->
+                <LinearLayout
+                    android:id="@+id/weekContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Feedback Button -->
         <Button
             android:id="@+id/feedbackButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Show Feedback"
-            android:layout_gravity="center"
-            android:padding="16dp"/>
-
-        <TextView
-            android:id="@+id/paceTrendTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:text="@string/show_feedback"
+            android:textAllCaps="false"
             android:textSize="16sp"
-            android:padding="8dp"/>
-
-        <TextView
-            android:id="@+id/heartRateTrendTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:padding="8dp"/>
-
-        <TextView
-            android:id="@+id/distanceTrendTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:padding="8dp"/>
-
-        <TextView
-            android:id="@+id/feedbackTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:padding="8dp"/>
-
-        <LinearLayout
-            android:id="@+id/weekContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-        </LinearLayout>
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/primary"
+            android:textColor="@android:color/white"
+            android:elevation="4dp"
+            android:layout_gravity="center"/>
     </LinearLayout>
 </ScrollView>
