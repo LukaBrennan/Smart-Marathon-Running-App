@@ -60,4 +60,7 @@ dependencies {
     // Multidex support
     implementation("androidx.multidex:multidex:2.0.1")
 
+    implementation("androidx.cardview:cardview:1.0.0")
+
+
 }
