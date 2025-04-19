@@ -4,9 +4,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.smartmarathonrunningapp_project.processors.ProgressiveFitnessAnalyzer;
-import com.example.smartmarathonrunningapp_project.processors.WeeklyReport;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
@@ -17,104 +14,80 @@ import java.util.Locale;
 import java.util.Map;
 
 public class FeedbackActivity extends AppCompatActivity {
-    private StravaRepository stravaRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_feedback); // Using your existing dialog layout
+        setContentView(R.layout.dialog_feedback);
 
-        stravaRepository = new StravaRepository(); // Initialize repository
         TextView feedbackTextView = findViewById(R.id.dialogFeedbackTextView);
-
-        // Handle both performance data and progressive reports
-        StringBuilder combinedFeedback = new StringBuilder();
-
-        // 1. Add performance data analysis if available
         String performanceDataJson = getIntent().getStringExtra("performanceData");
-        Log.d("FeedbackActivity", "Received performanceDataJson: " + performanceDataJson);
-        if (performanceDataJson != null) {
-            combinedFeedback.append(analyzePerformanceData(performanceDataJson));
-            combinedFeedback.append("\n\n——————————————————————\n\n");
-        }
 
-        // 2. Add progressive fitness reports
-        combinedFeedback.append(generateProgressiveReports());
+        Log.d("FeedbackActivity", "Raw JSON: " + performanceDataJson); // Add this line
 
-
-        feedbackTextView.setText(combinedFeedback.toString());
-    }
-
-    private String analyzePerformanceData(String performanceDataJson) {
-        StringBuilder analysis = new StringBuilder("Weekly Performance Analysis:\n\n");
-
-        try {
-            Type type = new TypeToken<Map<String, Map<String, Float>>>() {}.getType();
-            Map<String, Map<String, Float>> weeklyData = new Gson().fromJson(performanceDataJson, type);
-
-            if (weeklyData != null && !weeklyData.isEmpty()) {
-                List<String> weeks = new ArrayList<>(weeklyData.keySet());
-                Collections.sort(weeks);
-
-                for (String week : weeks) {
-                    analysis.append(week).append(":\n");
-                    for (Map.Entry<String, Float> entry : weeklyData.get(week).entrySet()) {
-                        String key = entry.getKey();
-                        float value = entry.getValue();
-
-                        analysis.append("  ").append(key).append(": ");
-
-                        if (key.toLowerCase().contains("pace")) {
-                            analysis.append(formatPace(value)).append("\n");
-                        } else if (key.toLowerCase().contains("distance")) {
-                            analysis.append(String.format(Locale.getDefault(), "%.2f km", value / 1000)).append("\n");
-                        } else if (key.toLowerCase().contains("heart rate") || key.toLowerCase().contains("hr")) {
-                            analysis.append(String.format(Locale.getDefault(), "%.1f bpm", value)).append("\n");
-                        } else {
-                            analysis.append(String.format(Locale.getDefault(), "%.1f", value)).append("\n");
-                        }
-                    }
-
-                    analysis.append("\n");
-                }
+        if (performanceDataJson != null && !performanceDataJson.isEmpty()) {
+            try {
+                String feedback = buildFeedbackString(performanceDataJson);
+                feedbackTextView.setText(feedback);
+                Log.d("FeedbackActivity", "Feedback displayed successfully");
+            } catch (Exception e) {
+                Log.e("FeedbackActivity", "Error building feedback", e);
+                feedbackTextView.setText("Error displaying feedback\n" + e.getMessage());
             }
-        } catch (Exception e) {
-            Log.e("FeedbackActivity", "Error parsing performance data", e);
-            return "Could not analyze performance data";
+        } else {
+            Log.e("FeedbackActivity", "No performance data received");
+            feedbackTextView.setText("No performance data available");
         }
-
-        return analysis.toString();
     }
 
-    private String generateProgressiveReports() {
-        StringBuilder reports = new StringBuilder("Progressive Fitness Report:\n\n");
+    private String buildFeedbackString(String json) throws Exception {
+        StringBuilder sb = new StringBuilder();
 
-        ProgressiveFitnessAnalyzer analyzer = new ProgressiveFitnessAnalyzer();
-        List<WeeklyReport> weeklyReports = analyzer.generateWeeklyReports(
-                stravaRepository.getCachedActivities() // Now using instance method
-        );
+        // 1. Parse the JSON
+        Type type = new TypeToken<Map<String, Map<String, Float>>>(){}.getType();
+        Map<String, Map<String, Float>> data = new Gson().fromJson(json, type);
 
-        List<Activity> cachedActivities = stravaRepository.getCachedActivities();
-        Log.d("FeedbackActivity", "Cached activities count: " + (cachedActivities != null ? cachedActivities.size() : "null"));
+        // 2. Weekly Analysis
+        sb.append("Weekly Performance Analysis\n\n");
+        List<String> weeks = new ArrayList<>(data.keySet());
+        Collections.sort(weeks);
 
-        if (cachedActivities == null || cachedActivities.isEmpty()) {
-            return "No training data available for progressive analysis";
+        for (String week : weeks) {
+            Map<String, Float> metrics = data.get(week);
+            sb.append(week).append(":\n")
+                    .append("• Pace: ").append(formatPace(metrics.get("Avg Pace (min/mile)"))).append("\n")
+                    .append("• Distance: ").append(String.format(Locale.US, "%.1f km", metrics.get("Avg Distance (m)") / 1000)).append("\n")
+                    .append("• Heart Rate: ").append(String.format(Locale.US, "%.0f bpm", metrics.get("Avg Heart Rate"))).append("\n")
+                    .append("• Runs: ").append(metrics.get("Total Runs").intValue()).append("\n\n");
         }
 
-        if (weeklyReports.isEmpty()) {
-            return "No training data available for progressive analysis";
+        // 3. Trend Analysis (if enough data)
+        if (weeks.size() >= 2) {
+            sb.append("Trend Analysis\n\n");
+            Map<String, Float> first = data.get(weeks.get(0));
+            Map<String, Float> last = data.get(weeks.get(weeks.size()-1));
+
+            float paceDiff = last.get("Avg Pace (min/mile)") - first.get("Avg Pace (min/mile)");
+            float distDiff = (last.get("Avg Distance (m)") - first.get("Avg Distance (m)")) / 1000;
+
+            sb.append(String.format(Locale.US,
+                    "From %s to %s:\n" +
+                            "• Pace %s by %s\n" +
+                            "• Distance %s by %.1f km",
+                    weeks.get(0), weeks.get(weeks.size()-1),
+                    paceDiff < 0 ? "improved" : "declined",
+                    formatPace(Math.abs(paceDiff)),
+                    distDiff > 0 ? "increased" : "decreased",
+                    Math.abs(distDiff)
+            ));
         }
 
-        for (WeeklyReport report : weeklyReports) {
-            reports.append(report.content).append("\n\n");
-        }
-
-        return reports.toString();
+        return sb.toString();
     }
 
     private String formatPace(float seconds) {
         int minutes = (int) (seconds / 60);
         int secs = (int) (seconds % 60);
-        return String.format(Locale.getDefault(), "%d:%02d min/mile", minutes, secs);
+        return String.format(Locale.US, "%d:%02d", minutes, secs);
     }
 }
