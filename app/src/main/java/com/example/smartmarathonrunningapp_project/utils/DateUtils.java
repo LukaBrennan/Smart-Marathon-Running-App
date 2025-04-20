@@ -1,5 +1,4 @@
 package com.example.smartmarathonrunningapp_project.utils;
-import android.annotation.SuppressLint;
 import android.util.Log;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,19 +15,6 @@ public class DateUtils {
     // Code that complies with SonarQube
     private DateUtils() {
         throw new IllegalStateException("Utility class - do not instantiate");
-    }
-
-    // Extracts the day of week
-    public static String getDayOfWeek(String date) {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try {
-            Date activityDate = dateFormat.parse(date);
-            @SuppressLint("SimpleDateFormat") SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE");
-            return dayFormat.format(activityDate);
-        } catch (ParseException e) {
-            Log.e(TAG, ERROR_LOG + date, e);
-            return null;
-        }
     }
 
     // Parses a date string into a Date object, supporting multiple formats

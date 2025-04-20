@@ -6,9 +6,8 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
 
-    // Manages loading and accessing the training plan from JSON assets
+// Manages loading and accessing the training plan from JSON assets
 public class TrainingPlanManager
 {
     // TAG for errors
@@ -34,20 +33,5 @@ public class TrainingPlanManager
             Log.e(TAG, "Failed to load training plan", e);
             return null;
         }
-    }
-    // Finds a training day by its name
-    public static TrainingPlan.Day getDayByName(TrainingPlan.TrainingWeek week, String dayName)
-    {
-        // Map day names to their corresponding Day objects
-        Map<String, TrainingPlan.Day> dayMap = Map.of(
-                "Monday", week.getTraining_plan().getMonday(),
-                "Tuesday", week.getTraining_plan().getTuesday(),
-                "Wednesday", week.getTraining_plan().getWednesday(),
-                "Thursday", week.getTraining_plan().getThursday(),
-                "Friday", week.getTraining_plan().getFriday(),
-                "Saturday", week.getTraining_plan().getSaturday(),
-                "Sunday", week.getTraining_plan().getSunday()
-        );
-        return dayMap.getOrDefault(dayName, null);
     }
 }

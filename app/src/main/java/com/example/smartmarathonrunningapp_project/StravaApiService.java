@@ -18,7 +18,5 @@ public interface StravaApiService
             @Header("Authorization") String accessToken,
             @Query("page") int page,
             @Query("per_page") int perPage
-            // Unix timestamp for start date
-            // Unix timestamp for end date
     );
 }
