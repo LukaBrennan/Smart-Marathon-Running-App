@@ -23,71 +23,87 @@ public class FeedbackActivity extends AppCompatActivity {
         TextView feedbackTextView = findViewById(R.id.dialogFeedbackTextView);
         String performanceDataJson = getIntent().getStringExtra("performanceData");
 
-        Log.d("FeedbackActivity", "Raw JSON: " + performanceDataJson); // Add this line
-
-        if (performanceDataJson != null && !performanceDataJson.isEmpty()) {
-            try {
-                String feedback = buildFeedbackString(performanceDataJson);
-                feedbackTextView.setText(feedback);
-                Log.d("FeedbackActivity", "Feedback displayed successfully");
-            } catch (Exception e) {
-                Log.e("FeedbackActivity", "Error building feedback", e);
-                feedbackTextView.setText("Error displaying feedback\n" + e.getMessage());
-            }
-        } else {
-            Log.e("FeedbackActivity", "No performance data received");
-            feedbackTextView.setText("No performance data available");
+        try {
+            String feedback = generatePersonalizedFeedback(performanceDataJson);
+            feedbackTextView.setText(feedback);
+        } catch (Exception e) {
+            feedbackTextView.setText("Error generating feedback");
+            Log.e("FeedbackActivity", "Error", e);
         }
     }
 
-    private String buildFeedbackString(String json) throws Exception {
-        StringBuilder sb = new StringBuilder();
-
-        // 1. Parse the JSON
+    private String generatePersonalizedFeedback(String json) {
+        // Parse the JSON data
         Type type = new TypeToken<Map<String, Map<String, Float>>>(){}.getType();
         Map<String, Map<String, Float>> data = new Gson().fromJson(json, type);
 
-        // 2. Weekly Analysis
-        sb.append("Weekly Performance Analysis\n\n");
-        List<String> weeks = new ArrayList<>(data.keySet());
-        Collections.sort(weeks);
+        // Get the two most recent runs
+        List<String> dates = new ArrayList<>(data.keySet());
+        Collections.sort(dates);
 
-        for (String week : weeks) {
-            Map<String, Float> metrics = data.get(week);
-            sb.append(week).append(":\n")
-                    .append("• Pace: ").append(formatPace(metrics.get("Avg Pace (min/mile)"))).append("\n")
-                    .append("• Distance: ").append(String.format(Locale.US, "%.1f km", metrics.get("Avg Distance (m)") / 1000)).append("\n")
-                    .append("• Heart Rate: ").append(String.format(Locale.US, "%.0f bpm", metrics.get("Avg Heart Rate"))).append("\n")
-                    .append("• Runs: ").append(metrics.get("Total Runs").intValue()).append("\n\n");
+        if (dates.size() < 2) {
+            return "Need at least 2 runs to compare";
         }
 
-        // 3. Trend Analysis (if enough data)
-        if (weeks.size() >= 2) {
-            sb.append("Trend Analysis\n\n");
-            Map<String, Float> first = data.get(weeks.get(0));
-            Map<String, Float> last = data.get(weeks.get(weeks.size()-1));
+        String latestDate = dates.get(dates.size()-1);
+        String previousDate = dates.get(dates.size()-2);
 
-            float paceDiff = last.get("Avg Pace (min/mile)") - first.get("Avg Pace (min/mile)");
-            float distDiff = (last.get("Avg Distance (m)") - first.get("Avg Distance (m)")) / 1000;
+        Map<String, Float> latestRun = data.get(latestDate);
+        Map<String, Float> previousRun = data.get(previousDate);
 
-            sb.append(String.format(Locale.US,
-                    "From %s to %s:\n" +
-                            "• Pace %s by %s\n" +
-                            "• Distance %s by %.1f km",
-                    weeks.get(0), weeks.get(weeks.size()-1),
-                    paceDiff < 0 ? "improved" : "declined",
-                    formatPace(Math.abs(paceDiff)),
-                    distDiff > 0 ? "increased" : "decreased",
-                    Math.abs(distDiff)
-            ));
+        // Calculate differences
+        float paceDiff = previousRun.get("Avg Pace (min/mile)") - latestRun.get("Avg Pace (min/mile)");
+        float hrDiff = previousRun.get("Avg Heart Rate") - latestRun.get("Avg Heart Rate");
+
+        // Generate feedback message
+        StringBuilder feedback = new StringBuilder();
+
+        // 1. Personalized greeting with emoji
+        feedback.append("🏃‍♂️ Great job on your run!\n\n");
+
+        // 2. Pace comparison
+        if (paceDiff > 0) {
+            feedback.append(String.format(Locale.getDefault(),
+                    "⭐ Your pace improved by %s compared to last run!\n",
+                    formatPace(paceDiff)));
+        } else if (paceDiff < 0) {
+            feedback.append(String.format(Locale.getDefault(),
+                    "🔹 Your pace was %s slower this time - maybe try some intervals next run?\n",
+                    formatPace(Math.abs(paceDiff))));
+        } else {
+            feedback.append("↔ Your pace was consistent with your last run\n");
         }
 
-        return sb.toString();
+        // 3. Heart rate analysis
+        if (hrDiff > 5) {
+            feedback.append("❤️  Your heart rate dropped significantly - great cardio efficiency!\n");
+        } else if (hrDiff > 0) {
+            feedback.append("❤️  Your heart rate was slightly lower - good endurance building\n");
+        } else if (hrDiff < -5) {
+            feedback.append("⚠️  Your heart rate was higher - consider more recovery time\n");
+        } else {
+            feedback.append("❤️  Your heart rate was stable\n");
+        }
+
+        // 4. Weekly summary
+        if (dates.size() >= 7) {
+            feedback.append("\n📊 Weekly Summary:\n");
+
+            float weeklyPaceChange = data.get(dates.get(0)).get("Avg Pace (min/mile)") -
+                    data.get(dates.get(dates.size()-1)).get("Avg Pace (min/mile)");
+
+            if (weeklyPaceChange > 0) {
+                feedback.append(String.format("You've improved your pace by %s this week!",
+                        formatPace(weeklyPaceChange)));
+            }
+        }
+
+        return feedback.toString();
     }
 
     private String formatPace(float seconds) {
         int minutes = (int) (seconds / 60);
         int secs = (int) (seconds % 60);
-        return String.format(Locale.US, "%d:%02d", minutes, secs);
+        return String.format(Locale.getDefault(), "%d:%02d", minutes, secs);
     }
 }

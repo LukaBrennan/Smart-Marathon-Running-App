@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.smartmarathonrunningapp_project.managers.TrainingPlanManager;
@@ -27,9 +28,6 @@ import com.example.smartmarathonrunningapp_project.utils.PaceUtils;
     // Main activity that coordinates training plan tracking and Strava integration
 public class MainActivity extends AppCompatActivity {
         private static final String TAG = "MainActivity";
-        public static final String START_DATE = "2023-08-07";
-        public static final String END_DATE = "2023-10-29";
-
         // Dependencies
         private StravaRepository stravaRepository;
         private TrainingPlanManager planManager;
@@ -40,14 +38,14 @@ public class MainActivity extends AppCompatActivity {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-
+            stravaRepository = new StravaRepository(this);
             initializeDependencies();
             setupUI();
             fetchAndCheckActivities();
         }
 
         private void initializeDependencies() {
-            stravaRepository = new StravaRepository();
+            //stravaRepository = new StravaRepository(this);
             planManager = new TrainingPlanManager(this);
             activityProcessor = new ActivityProcessor();
             stravaRepository.loadLocalActivities(this);
@@ -55,8 +53,15 @@ public class MainActivity extends AppCompatActivity {
 
         private void setupUI() {
             Button btnFeedback = findViewById(R.id.feedbackButton);
-            btnFeedback.setOnClickListener(v -> launchFeedbackActivity());
+            btnFeedback.setOnClickListener(v -> {
+                if (performanceData.isEmpty()) {
+                    Toast.makeText(this, "Fetching latest data. Please wait a moment.", Toast.LENGTH_SHORT).show();
+                } else {
+                    launchFeedbackActivity();
+                }
+            });
         }
+
 
         private void launchFeedbackActivity() {
             Log.d(TAG, "Sending performance data: " + performanceData);

@@ -7,6 +7,22 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name= 'light_gray'>#F5F5F5</color>
     <color name="primary">#6200EE</color>
+    <color name="Soft_Green">#03A9F4</color>
+    <color name="Light_Blue">#4CAF50</color>
+    <color name="accent">#03A9F4</color>
+
+
+    <color name="background_light">#FFFFFF</color>
+    <color name="card_background">#F9F9F9</color>
+
+
+    <color name="accent_orange">#FC5200</color>
+    <color name="button_bg">#FC5200</color>
+
+
+    <color name="text_primary">#1E1E1E</color>
+    <color name="text_secondary">#2C2C2C</color>
+    <color name="divider">#E0E0E0</color>
+
 </resources>

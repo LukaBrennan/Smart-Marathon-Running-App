@@ -118,6 +118,16 @@ public class Activity {
         return (start_latlng != null && start_latlng.size() > 1) ? start_latlng.get(1) : 0.0;
     }
 
+    // Converts average speed (m/s) to pace (min/mile)
+    public double getPace() {
+        double metersPerMile = 1609.34;
+        double paceInSecondsPerMile = distance > 0 ? (moving_time / (distance / metersPerMile)) : 0;
+        return paceInSecondsPerMile / 60.0;  // pace in minutes per mile
+    }
+
+    public int getHeartRate() {
+        return (int) average_heartrate;
+    }
 
 
 }

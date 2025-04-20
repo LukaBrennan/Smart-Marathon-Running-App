@@ -28,10 +28,11 @@ public class StravaRepository
 {
     private final StravaApiService apiService;
     private static final String TAG = "StravaRepository";
-
+    private Context context;
     private List<Activity> cachedActivities = new ArrayList<>();
-    public StravaRepository()
+    public StravaRepository(Context context)
     {
+        this.context = context;
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://www.strava.com/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -40,11 +41,8 @@ public class StravaRepository
     }
     public void fetchActivities(String accessToken, int page, int perPage, Callback<List<Activity>> callback)
     {
-        long after = convertDateToUnixTimestamp(MainActivity.START_DATE);
-        long before = convertDateToUnixTimestamp(MainActivity.END_DATE);
         // Logging
-        Log.d(TAG, "Fetching activities between: " + MainActivity.START_DATE + " (" + after + ") and " + MainActivity.END_DATE + " (" + before + ")");
-        apiService.getUserActivities("Bearer " + accessToken, page, perPage, after, before)
+        apiService.getUserActivities("Bearer " + accessToken, page, perPage)
                 .enqueue(new Callback<>()
                 {
                     @Override

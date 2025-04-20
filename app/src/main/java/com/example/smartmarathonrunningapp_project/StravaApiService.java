@@ -17,8 +17,8 @@ public interface StravaApiService
     Call<List<Activity>> getUserActivities(
             @Header("Authorization") String accessToken,
             @Query("page") int page,
-            @Query("per_page") int perPage,
-            @Query("after") long after,  // Unix timestamp for start date
-            @Query("before") long before // Unix timestamp for end date
+            @Query("per_page") int perPage
+            // Unix timestamp for start date
+            // Unix timestamp for end date
     );
 }
