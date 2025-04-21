@@ -2,6 +2,7 @@ package com.example.smartmarathonrunningapp_project;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -19,13 +20,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import com.example.smartmarathonrunningapp_project.utils.DateUtils;
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private StravaRepository stravaRepository;
     private TrainingPlanManager planManager;
-    private final Map<String, Map<String, Float>> performanceData = new HashMap<>();
+    private AutoAdjuster autoAdjuster;
+
+    private final PerformanceData performanceData = new PerformanceData();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         initializeDependencies();
         setupUI();
         fetchAndCheckActivities();
+        autoAdjuster = new AutoAdjuster();
     }
 
     private void initializeDependencies() {
@@ -53,9 +57,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void launchFeedbackActivity() {
-        Log.d(TAG, "Sending performance data: " + new Gson().toJson(performanceData));
         Intent intent = new Intent(this, FeedbackActivity.class);
-        intent.putExtra("performanceData", new Gson().toJson(performanceData));
+        intent.putExtra("performanceData", performanceData.toJson());
         startActivity(intent);
     }
 
@@ -95,12 +98,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void processFetchedActivities(List<Activity> activities) {
-            TrainingPlan trainingPlan = planManager.loadTrainingPlanFromAssets();
+            // Load either adjusted plan or fallback to original
+            TrainingPlan trainingPlan = planManager.loadAdjustedPlan();
             if (trainingPlan == null) {
-                Log.e(TAG, "Failed to load training plan");
-                return;
+                trainingPlan = planManager.loadTrainingPlanFromAssets();
             }
-            generatePerformanceData(activities);
+
+            performanceData.clear();
+            for (Activity activity : activities) {
+                if (isValidActivity(activity)) {
+                    performanceData.addActivity(activity);
+                    // Auto-adjust after each activity
+                    trainingPlan = autoAdjuster.adjustPlan(trainingPlan, activity);
+                }
+            }
+
+            // Save adjusted plan
+            planManager.saveAdjustedPlan(trainingPlan);
             updateUI(trainingPlan);
         }
 
@@ -108,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         private void updateUI(TrainingPlan trainingPlan) {
             LinearLayout weekContainer = findViewById(R.id.weekContainer);
             weekContainer.removeAllViews();
+
             for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks()) {
                 addWeekView(weekContainer, week);
                 addDayViews(weekContainer, week);
@@ -138,88 +153,24 @@ public class MainActivity extends AppCompatActivity {
         private void addDayView(LinearLayout container, TrainingPlan.Day day, String dayName) {
             if (day != null) {
                 TextView dayTextView = new TextView(MainActivity.this);
-                dayTextView.setText(dayName + ": " + day.getExercise() + " - " +
-                        day.getDistance() + " @ " + day.getPace());
+                String text = dayName + ": " + day.getExercise() + " - " +
+                        day.getDistance() + " @ " + day.getPace();
+
+                // Show adjustment note if exists
+                if (day.getAdjustmentNote() != null) {
+                    text += "\n[Adjusted: " + day.getAdjustmentNote() + "]";
+                    dayTextView.setTextColor(Color.BLUE);
+                }
+
+                dayTextView.setText(text);
                 dayTextView.setTextSize(16);
                 dayTextView.setPadding(16, 8, 16, 8);
                 container.addView(dayTextView);
             }
         }
 
-        private void generatePerformanceData(List<Activity> activities) {
-            performanceData.clear();
-            if (activities == null || activities.isEmpty()) return;
-
-            Map<String, List<Activity>> weeklyActivities = groupActivitiesByWeek(activities);
-            calculateWeeklyMetrics(weeklyActivities);
-        }
-
-        private Map<String, List<Activity>> groupActivitiesByWeek(List<Activity> activities) {
-            Map<String, List<Activity>> weeklyActivities = new TreeMap<>();
-            for (Activity activity : activities) {
-                try {
-                    if (isValidActivity(activity)) {
-                        String week = DateUtils.getWeekOfYear(activity.getStart_date());
-                        weeklyActivities.computeIfAbsent(week, k -> new ArrayList<>()).add(activity);
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error processing activity: " + activity.getName(), e);
-                }
-            }
-            return weeklyActivities;
-        }
-
         private boolean isValidActivity(Activity activity) {
             return activity.getDistance() > 100 && activity.getMoving_time() > 60;
-        }
-
-        private void calculateWeeklyMetrics(Map<String, List<Activity>> weeklyActivities) {
-            for (Map.Entry<String, List<Activity>> entry : weeklyActivities.entrySet()) {
-                Map<String, Float> weekMetrics = calculateMetricsForWeek(entry.getValue());
-                if (!weekMetrics.isEmpty()) {
-                    performanceData.put(entry.getKey(), weekMetrics);
-                }
-            }
-        }
-
-        private Map<String, Float> calculateMetricsForWeek(List<Activity> weekRuns) {
-            Map<String, Float> weekMetrics = new HashMap<>();
-            ActivityMetrics metrics = calculateAggregateMetrics(weekRuns);
-
-            if (metrics.validRuns > 0) {
-                float avgPace = metrics.totalTime / UnitConverter.metersToMiles(metrics.totalDistance);
-                float avgDistance = metrics.totalDistance / metrics.validRuns;
-                float avgHeartRate = metrics.totalHeartRate > 0 ?
-                        metrics.totalHeartRate / metrics.validRuns : 0;
-
-                weekMetrics.put("Avg Pace (min/mile)", avgPace);
-                weekMetrics.put("Avg Distance (m)", avgDistance);
-                weekMetrics.put("Avg Heart Rate", avgHeartRate);
-                weekMetrics.put("Total Runs", (float) metrics.validRuns);
-            }
-            return weekMetrics;
-        }
-
-        private ActivityMetrics calculateAggregateMetrics(List<Activity> weekRuns) {
-            ActivityMetrics metrics = new ActivityMetrics();
-            for (Activity run : weekRuns) {
-                if (run.getDistance() > 0 && run.getMoving_time() > 0) {
-                    metrics.totalDistance += run.getDistance();
-                    metrics.totalTime += run.getMoving_time();
-                    if (run.getAverage_heartrate() > 0) {
-                        metrics.totalHeartRate += run.getAverage_heartrate();
-                    }
-                    metrics.validRuns++;
-                }
-            }
-            return metrics;
-        }
-
-        private class ActivityMetrics {
-            float totalDistance = 0;
-            float totalTime = 0;
-            float totalHeartRate = 0;
-            int validRuns = 0;
         }
     }
 }

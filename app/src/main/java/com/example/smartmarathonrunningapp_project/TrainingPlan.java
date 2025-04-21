@@ -105,6 +105,8 @@ public class TrainingPlan {
         private String distance;
         private String pace;
         private boolean completed;
+        private String adjustmentNote;
+
 
         public String getExercise() {
             return exercise;
@@ -137,5 +139,8 @@ public class TrainingPlan {
         public void setCompleted(boolean completed) {
             this.completed = completed;
         }
+
+        public String getAdjustmentNote() { return adjustmentNote; }
+        public void setAdjustmentNote(String note) { this.adjustmentNote = note; }
     }
 }

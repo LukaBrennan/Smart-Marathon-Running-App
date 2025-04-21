@@ -119,10 +119,9 @@ public class Activity {
     }
 
     // Converts average speed (m/s) to pace (min/mile)
-    public double getPace() {
-        double metersPerMile = 1609.34;
-        double paceInSecondsPerMile = distance > 0 ? (moving_time / (distance / metersPerMile)) : 0;
-        return paceInSecondsPerMile / 60.0;  // pace in minutes per mile
+    public float getPaceInSeconds() {
+        float metersPerMile = 1609.34f;
+        return distance > 0 ? (moving_time / (distance / metersPerMile)) : 0;
     }
 
     public int getHeartRate() {

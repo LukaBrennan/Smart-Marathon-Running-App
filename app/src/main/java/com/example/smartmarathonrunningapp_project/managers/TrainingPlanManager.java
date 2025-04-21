@@ -1,5 +1,8 @@
 package com.example.smartmarathonrunningapp_project.managers;
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import com.example.smartmarathonrunningapp_project.TrainingPlan;
 import com.google.gson.Gson;
@@ -34,4 +37,29 @@ public class TrainingPlanManager
             return null;
         }
     }
+
+    public void saveAdjustedPlan(TrainingPlan plan) {
+        try {
+            String json = new Gson().toJson(plan);
+            // Save to SharedPreferences or file
+            SharedPreferences prefs = context.getSharedPreferences("TrainingPrefs", MODE_PRIVATE);
+            prefs.edit().putString("adjusted_plan", json).apply();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save plan", e);
+        }
+    }
+
+    public TrainingPlan loadAdjustedPlan() {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("TrainingPrefs", MODE_PRIVATE);
+            String json = prefs.getString("adjusted_plan", null);
+            if (json != null) {
+                return new Gson().fromJson(json, TrainingPlan.class);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load plan", e);
+        }
+        return loadTrainingPlanFromAssets(); // Fallback
+    }
+
 }
