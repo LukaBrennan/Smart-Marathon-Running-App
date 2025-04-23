@@ -4,13 +4,21 @@ import java.util.List;
 
 public class TrainingPlan {
     private List<TrainingWeek> training_weeks;
-
+    private String adjustmentNote;
     public List<TrainingWeek> getTraining_weeks() {
         return training_weeks;
     }
 
     public void setTraining_weeks(List<TrainingWeek> training_weeks) {
         this.training_weeks = training_weeks;
+    }
+
+    public String getAdjustmentNote() {
+        return adjustmentNote;
+    }
+
+    public void setAdjustmentNote(String adjustmentNote) {
+        this.adjustmentNote = adjustmentNote;
     }
 
     public static class TrainingWeek {

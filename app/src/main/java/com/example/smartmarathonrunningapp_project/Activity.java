@@ -14,6 +14,8 @@ public class Activity {
     private float max_heartrate;
     private float max_speed;
     private List<Float> start_latlng;
+    private float resting_heartrate = 50;
+    private boolean isMale = true;
     public float getMax_speed() {
         return max_speed;
     }
@@ -116,6 +118,16 @@ public class Activity {
 
     public double getLongitude() {
         return (start_latlng != null && start_latlng.size() > 1) ? start_latlng.get(1) : 0.0;
+    }
+
+    public float getResting_heartrate() { return resting_heartrate; }
+    public void setResting_heartrate(float resting_heartrate) {
+        this.resting_heartrate = resting_heartrate;
+    }
+
+    public boolean isMale() { return isMale; }
+    public void setMale(boolean isMale) {
+        this.isMale = isMale;
     }
 
     // Converts average speed (m/s) to pace (min/mile)

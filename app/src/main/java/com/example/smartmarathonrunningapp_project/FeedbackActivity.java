@@ -44,25 +44,80 @@ public class FeedbackActivity extends AppCompatActivity {
         Collections.sort(weeks, Collections.reverseOrder());
 
         if (!weeks.isEmpty()) {
-            String latestWeek = weeks.get(0);
-            Map<String, Map<String, Float>> weekRuns = runData.get(latestWeek);
-            List<String> days = new ArrayList<>(weekRuns.keySet());
-            Collections.sort(days, Collections.reverseOrder());
+            String currentWeek = weeks.get(0);
+            Map<String, Map<String, Float>> weekRuns = runData.get(currentWeek);
 
-            if (!days.isEmpty()) {
-                Map<String, Float> currentRun = weekRuns.get(days.get(0));
-                Map<String, Float> previousRun = findPreviousRun(runData, latestWeek, days.get(0));
+            if (weekRuns != null) {
+                List<String> days = new ArrayList<>(weekRuns.keySet());
+                Collections.sort(days, Collections.reverseOrder());
 
-                feedback.append(DailyFeedbackGenerator.generate(currentRun, previousRun));
-            }
+                if (!days.isEmpty()) {
+                    Map<String, Float> currentRun = weekRuns.get(days.get(0));
 
-            // Weekly summary if enough data
-            if (weeks.size() > 1) {
-                feedback.append("\n").append(generateWeeklySummary(runData, weeks));
+                    if (currentRun != null) {
+                        // Add basic run info
+                        feedback.append("🏃 Run Analysis:\n");
+
+                        // Safely get run metrics with defaults
+                        Float distance = currentRun.get("distance");
+                        Float pace = currentRun.get("pace");
+                        Float heartRate = currentRun.get("heart_rate");
+                        Float movingTime = currentRun.get("moving_time");
+
+                        if (distance != null) {
+                            feedback.append(String.format(Locale.getDefault(),
+                                    "  Distance: %.2f km\n", distance / 1000));
+                        }
+
+                        if (pace != null) {
+                            feedback.append(String.format(Locale.getDefault(),
+                                    "  Pace: %s/km\n", formatPace(pace)));
+                        }
+
+                        if (heartRate != null) {
+                            feedback.append(String.format(Locale.getDefault(),
+                                    "  Avg HR: %.0f bpm\n", heartRate));
+                        }
+
+                        // Calculate TRIMP only if we have all required data
+                        if (movingTime != null && heartRate != null) {
+                            try {
+                                float trimp = TRIMP.calculate(
+                                        movingTime/60f,
+                                        heartRate,
+                                        50f, // Default resting HR - should be configurable
+                                        190f, // Default max HR - should be configurable
+                                        true // Default gender - should be configurable
+                                );
+                                feedback.append(String.format(Locale.getDefault(),
+                                        "  Training Load: %.1f TRIMP\n", trimp));
+                            } catch (Exception e) {
+                                Log.e(TAG, "TRIMP calculation failed", e);
+                            }
+                        }
+
+                        // Find and compare with previous run
+                        Map<String, Float> previousRun = findPreviousRun(runData, currentWeek, days.get(0));
+                        if (previousRun != null) {
+                            feedback.append("\nCompared to previous run:\n");
+
+                            // Add comparison logic here if needed
+                        }
+                    }
+                }
             }
         }
 
         return feedback.length() > 0 ? feedback.toString() : "No valid running data available";
+    }
+
+    private float calculateWeeklyTRIMP(Map<String, Map<String, Float>> weekData) {
+        if (weekData == null) return 0;
+
+        // This assumes you've added TRIMP to the performance data storage
+        return weekData.values().stream()
+                .map(run -> run.getOrDefault("trimp", 0f))
+                .reduce(0f, Float::sum);
     }
 
     private Map<String, Float> findPreviousRun(Map<String, Map<String, Map<String, Float>>> runData,

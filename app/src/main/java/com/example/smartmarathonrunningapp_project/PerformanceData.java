@@ -27,6 +27,16 @@ public class PerformanceData {
             metrics.put("heart_rate", activity.getAverage_heartrate());
             metrics.put("elevation", activity.getTotal_elevation_gain());
 
+            // Calculate and add TRIMP
+            float trimp = TRIMP.calculate(
+                    activity.getMoving_time()/60f,
+                    activity.getAverage_heartrate(),
+                    activity.getResting_heartrate(),
+                    activity.getMax_heartrate(),
+                    activity.isMale()
+            );
+            metrics.put("trimp", trimp);
+
             data.computeIfAbsent(type, k -> new TreeMap<>(Collections.reverseOrder()))
                     .computeIfAbsent(week, k -> new HashMap<>())
                     .put(day, metrics);

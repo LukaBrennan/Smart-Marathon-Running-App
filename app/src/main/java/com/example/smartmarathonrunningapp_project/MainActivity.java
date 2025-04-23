@@ -98,22 +98,27 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void processFetchedActivities(List<Activity> activities) {
-            // Load either adjusted plan or fallback to original
             TrainingPlan trainingPlan = planManager.loadAdjustedPlan();
             if (trainingPlan == null) {
                 trainingPlan = planManager.loadTrainingPlanFromAssets();
             }
 
             performanceData.clear();
+            List<Activity> validActivities = new ArrayList<>();
+
+            // First collect all valid activities
             for (Activity activity : activities) {
                 if (isValidActivity(activity)) {
+                    validActivities.add(activity);
                     performanceData.addActivity(activity);
-                    // Auto-adjust after each activity
-                    trainingPlan = autoAdjuster.adjustPlan(trainingPlan, activity);
                 }
             }
 
-            // Save adjusted plan
+            // Then adjust the plan once with all activities
+            if (!validActivities.isEmpty()) {
+                trainingPlan = autoAdjuster.adjustPlan(trainingPlan, validActivities);
+            }
+
             planManager.saveAdjustedPlan(trainingPlan);
             updateUI(trainingPlan);
         }
