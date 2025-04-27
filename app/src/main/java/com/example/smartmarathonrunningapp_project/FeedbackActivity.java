@@ -1,210 +1,174 @@
 package com.example.smartmarathonrunningapp_project;
-
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class FeedbackActivity extends AppCompatActivity {
+    //  This class displays the running performance feedback for the runner, showing metrics like distance pace and effort level.
+public class FeedbackActivity extends AppCompatActivity
+{
+    //  Logging TAGS
     private static final String TAG = "FeedbackActivity";
-
+    @SuppressLint("SetTextI18n")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_feedback);
-
-        TextView feedbackTextView = findViewById(R.id.dialogFeedbackTextView);
+        //  Initialising the UI components
+        Button closeButton = findViewById(R.id.closeButton);
+        //  Getting the performance data from the previous activities
         String performanceDataJson = getIntent().getStringExtra("performanceData");
-
-        try {
+        try
+        {
+            //  parse JSON into performanceData object
             PerformanceData performanceData = PerformanceData.fromJson(performanceDataJson);
-            String feedback = generateFeedback(performanceData);
-            feedbackTextView.setText(feedback);
-        } catch (Exception e) {
+            if (!performanceData.isEmpty())
+            {
+                updateFeedbackUI(performanceData);  //  Update the UI with valid data
+            }
+            else
+            {
+                TextView feedbackText = findViewById(R.id.feedbackText);
+                feedbackText.setText("No running data available");
+            }
+        }
+        catch (Exception e)
+        {
             Log.e(TAG, "Error generating feedback", e);
-            feedbackTextView.setText("Error generating feedback");
+            TextView feedbackText = findViewById(R.id.feedbackText);
+            feedbackText.setText("Error generating feedback");
+        }
+        closeButton.setOnClickListener(v -> finish());
+    }
+    //  Updates all UI elements with performance data
+    @SuppressLint({"SetTextI18n", "DefaultLocale"})
+    private void updateFeedbackUI(PerformanceData performanceData)
+    {
+        //  Get references to all Textview components
+        TextView feedbackText = findViewById(R.id.feedbackText);
+        TextView distanceView = findViewById(R.id.distanceValue);
+        TextView paceView = findViewById(R.id.paceValue);
+        TextView effortView = findViewById(R.id.effortValue);
+        TextView streakView = findViewById(R.id.streakValue);
+        TextView achievementView = findViewById(R.id.achievementText);
+        //  Getting metrics from the most recent run
+        Map<String, Float> currentRun = getMostRecentRun(performanceData);
+        if (currentRun.isEmpty())
+        {
+            feedbackText.setText("No recent runs found");
+            return;
+        }
+
+        // Generate and display the main feedback text
+        String feedback = generateFeedback(currentRun, performanceData);
+        feedbackText.setText(feedback);
+
+        // Safely extract and display metrics with null checks
+        Float distance = currentRun.get("distance");
+        Float pace = currentRun.get("pace");
+        Float trimp = currentRun.get("trimp");
+        //  Displaying logic
+        distanceView.setText(distance != null ? String.format(Locale.getDefault(), "%.1f km", distance / 1000) : "N/A");
+        paceView.setText(pace != null ? formatPace(pace) + "/km" : "N/A");
+        if (trimp != null)
+        {
+            String effortLevel = performanceData.getRelativeEffortLevel(trimp);
+            effortView.setText(String.format(Locale.getDefault(),"%.0f (%s)", trimp, effortLevel));
+        }
+        else
+        {
+            effortView.setText("N/A");
+        }
+        int streak = performanceData.getCurrentStreak();
+        streakView.setText(String.format(Locale.getDefault(),"%d-day streak", streak));
+        // Achievement detection
+        if (distance != null && distance > 20000)
+        {
+            achievementView.setText("Long run achievement!");
+        }
+        else if (pace != null && pace < 300)
+        {
+            achievementView.setText("Speed achievement!");
+        }
+        else
+        {
+            achievementView.setText("Keep going!");
         }
     }
-
-    private String generateFeedback(PerformanceData performanceData) {
-        if (performanceData == null || performanceData.isEmpty()) {
-            return "No running data available";
-        }
-
-        StringBuilder feedback = new StringBuilder();
+    //  retrieves metrics from the most recent runs in the performance data
+    private Map<String, Float> getMostRecentRun(PerformanceData performanceData)
+    {
+        //  Get all run data organised by week
         Map<String, Map<String, Map<String, Float>>> runData = performanceData.getRunData();
-
-        // Get most recent run
-        List<String> weeks = new ArrayList<>(runData.keySet());
-        Collections.sort(weeks, Collections.reverseOrder());
-
-        if (!weeks.isEmpty()) {
-            String currentWeek = weeks.get(0);
-            Map<String, Map<String, Float>> weekRuns = runData.get(currentWeek);
-
-            if (weekRuns != null) {
-                List<String> days = new ArrayList<>(weekRuns.keySet());
-                Collections.sort(days, Collections.reverseOrder());
-
-                if (!days.isEmpty()) {
-                    Map<String, Float> currentRun = weekRuns.get(days.get(0));
-
-                    if (currentRun != null) {
-                        // Add basic run info
-                        feedback.append("🏃 Run Analysis:\n");
-
-                        // Safely get run metrics with defaults
-                        Float distance = currentRun.get("distance");
-                        Float pace = currentRun.get("pace");
-                        Float heartRate = currentRun.get("heart_rate");
-                        Float movingTime = currentRun.get("moving_time");
-
-                        if (distance != null) {
-                            feedback.append(String.format(Locale.getDefault(),
-                                    "  Distance: %.2f km\n", distance / 1000));
-                        }
-
-                        if (pace != null) {
-                            feedback.append(String.format(Locale.getDefault(),
-                                    "  Pace: %s/km\n", formatPace(pace)));
-                        }
-
-                        if (heartRate != null) {
-                            feedback.append(String.format(Locale.getDefault(),
-                                    "  Avg HR: %.0f bpm\n", heartRate));
-                        }
-
-                        // Calculate TRIMP only if we have all required data
-                        if (movingTime != null && heartRate != null) {
-                            try {
-                                float trimp = TRIMP.calculate(
-                                        movingTime/60f,
-                                        heartRate,
-                                        50f, // Default resting HR - should be configurable
-                                        190f, // Default max HR - should be configurable
-                                        true // Default gender - should be configurable
-                                );
-                                feedback.append(String.format(Locale.getDefault(),
-                                        "  Training Load: %.1f TRIMP\n", trimp));
-                            } catch (Exception e) {
-                                Log.e(TAG, "TRIMP calculation failed", e);
-                            }
-                        }
-
-                        // Find and compare with previous run
-                        Map<String, Float> previousRun = findPreviousRun(runData, currentWeek, days.get(0));
-                        if (previousRun != null) {
-                            feedback.append("\nCompared to previous run:\n");
-
-                            // Add comparison logic here if needed
-                        }
-                    }
-                }
-            }
+        if (runData == null || runData.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+        //  Find the latest week
+        String latestWeek = Collections.max(runData.keySet());
+        Map<String, Map<String, Float>> weekRuns = runData.get(latestWeek);
+        if (weekRuns == null || weekRuns.isEmpty())
+        {
+            return Collections.emptyMap();
+        }
+        //  Find the latest day in the week
+        String latestDay = Collections.max(weekRuns.keySet());
+        Map<String, Float> run = weekRuns.get(latestDay);
+        if (run == null)
+        {
+            return Collections.emptyMap();
         }
 
-        return feedback.length() > 0 ? feedback.toString() : "No valid running data available";
-    }
-
-    private float calculateWeeklyTRIMP(Map<String, Map<String, Float>> weekData) {
-        if (weekData == null) return 0;
-
-        // This assumes you've added TRIMP to the performance data storage
-        return weekData.values().stream()
-                .map(run -> run.getOrDefault("trimp", 0f))
-                .reduce(0f, Float::sum);
-    }
-
-    private Map<String, Float> findPreviousRun(Map<String, Map<String, Map<String, Float>>> runData,
-                                               String currentWeek, String currentDay) {
-        List<String> weeks = new ArrayList<>(runData.keySet());
-        Collections.sort(weeks);
-
-        for (String week : weeks) {
-            Map<String, Map<String, Float>> weekData = runData.get(week);
-            if (weekData == null) continue;
-
-            List<String> days = new ArrayList<>(weekData.keySet());
-            Collections.sort(days);
-
-            for (String day : days) {
-                if (week.equals(currentWeek) && day.equals(currentDay)) continue;
-                return weekData.get(day);
-            }
+        // Calculate pace from average speed
+        Float avgSpeed = run.get("average_speed");
+        if (avgSpeed != null && !run.containsKey("pace"))
+        {
+            float paceSecPerKm = 1000 / avgSpeed;
+            run.put("pace", paceSecPerKm);
         }
-        return null;
+        return run;
     }
-
-    private String generateWeeklySummary(Map<String, Map<String, Map<String, Float>>> runData,
-                                         List<String> weeks) {
-        if (weeks.size() < 2) return "";
-
-        String currentWeek = weeks.get(0);
-        String previousWeek = weeks.get(1);
-
-        WeeklyMetrics current = calculateWeeklyMetrics(runData.get(currentWeek));
-        WeeklyMetrics previous = calculateWeeklyMetrics(runData.get(previousWeek));
-
-        if (current == null || previous == null) return "";
-
-        StringBuilder summary = new StringBuilder("📊 Weekly Summary:\n");
-
-        float paceDiff = previous.avgPace - current.avgPace;
-        summary.append(String.format(Locale.getDefault(),
-                "• Pace: %s (%s)\n",
-                formatPace(current.avgPace),
-                paceDiff > 0 ? "improved by " + formatPace(paceDiff) :
-                        "slowed by " + formatPace(Math.abs(paceDiff))));
-
-        float distDiff = current.totalDistance - previous.totalDistance;
-        float distPercent = (distDiff / previous.totalDistance) * 100;
-        summary.append(String.format(Locale.getDefault(),
-                "• Distance: %.1f km (%+.1f%%)\n",
-                current.totalDistance / 1000, distPercent));
-
-        float hrDiff = previous.avgHeartRate - current.avgHeartRate;
-        if (Math.abs(hrDiff) > 1) {
-            summary.append(String.format(Locale.getDefault(),
-                    "• Heart Rate: %.1f bpm (%+.1f)\n",
-                    current.avgHeartRate, -hrDiff));
+    //  Generates the feedback text summarizing the run
+    private String generateFeedback(Map<String, Float> currentRun, PerformanceData performanceData)
+    {
+        StringBuilder feedback = new StringBuilder();
+        // extract metrics with defaults for missing values
+        Float distance = currentRun.get("distance");
+        float distanceKm = (distance != null ? distance : 0f) / 1000f;
+        Float pace = currentRun.get("pace");
+        float paceSecPerKm = pace != null ? pace : 0f;
+        Float trimpValue = currentRun.get("trimp");
+        float trimp = trimpValue != null ? trimpValue : 0f;
+        //  Build the feedback string
+        feedback.append(String.format(Locale.getDefault(),"Nice steady %.1f km run! ", distanceKm));
+        feedback.append(String.format(Locale.getDefault(),"You maintained a pace of %s/km.%n%n", formatPace(paceSecPerKm)));
+        //  Add effort information
+        String effortLevel = performanceData.getRelativeEffortLevel(trimp);
+        feedback.append(String.format(Locale.getDefault(),"Relative Effort: %.0f (%s)%n", trimp, effortLevel));
+        //  Add streak information
+        int streak = performanceData.getCurrentStreak();
+        feedback.append(String.format(Locale.getDefault(),"%d-day running streak%n%n", streak));
+        //  Add training load advice
+        PerformanceData.PerformanceMetrics metrics = performanceData.calculatePerformanceMetrics();
+        if (metrics.acuteLoad / metrics.chronicLoad > 1.2f)
+        {
+            feedback.append("Great effort! Consider a recovery day soon.");
         }
-
-        return summary.toString();
-    }
-
-    private WeeklyMetrics calculateWeeklyMetrics(Map<String, Map<String, Float>> weekData) {
-        if (weekData == null) return null;
-
-        WeeklyMetrics metrics = new WeeklyMetrics();
-        int runCount = 0;
-
-        for (Map<String, Float> run : weekData.values()) {
-            metrics.totalDistance += run.getOrDefault("distance", 0f);
-            metrics.avgPace += run.getOrDefault("pace", 0f);
-            metrics.avgHeartRate += run.getOrDefault("heart_rate", 0f);
-            runCount++;
+        else
+        {
+            feedback.append("Keep up the consistency!");
         }
-
-        if (runCount > 0) {
-            metrics.avgPace /= runCount;
-            metrics.avgHeartRate /= runCount;
-        }
-
-        return metrics;
+        return feedback.toString();
     }
-
-    private static class WeeklyMetrics {
-        float totalDistance = 0;
-        float avgPace = 0;
-        float avgHeartRate = 0;
-    }
-
-    private String formatPace(float seconds) {
+    //  Formats the pace from seconds per KM to min:sec per KM
+    private String formatPace(float seconds)
+    {
         int minutes = (int) (seconds / 60);
         int secs = (int) (seconds % 60);
         return String.format(Locale.getDefault(), "%d:%02d", minutes, secs);

@@ -3,35 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/background_light">  <!-- White Background -->
+    android:background="@color/strava_gray"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:padding="8dp">
 
-        <!-- Title Header -->
-        <TextView
-            android:id="@+id/headerTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/training_plan"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/accent_orange"
-            android:gravity="center"
-            android:paddingBottom="16dp"/>
-
-        <!-- Training Plan Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="6dp"
-            android:background="@color/card_background">  <!-- White Card -->
+            app:cardBackgroundColor="@color/strava_orange"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -40,23 +27,91 @@
                 android:padding="16dp">
 
                 <TextView
+                    android:id="@+id/headerTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/training_plan"
+                    style="@style/TextHeader"
+                    android:textColor="@color/strava_light_text"
+                    android:gravity="center"/>
+
+                <TextView
                     android:id="@+id/activityTextView"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/twelve_week_plan"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:paddingBottom="8dp"/>
+                    style="@style/TextSubheader"
+                    android:textColor="@color/strava_light_text"
+                    android:gravity="center"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-                <!-- Divider -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            app:cardBackgroundColor="@color/strava_light_text"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Current Week"
+                    style="@style/TextSubheader"
+                    android:textColor="@color/strava_orange"/>
+
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    android:background="@color/divider"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="8dp"
+                    android:background="@color/strava_divider"/>
 
-                <!-- Week Container -->
+                <LinearLayout
+                    android:id="@+id/weekStatsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            app:cardBackgroundColor="@color/strava_light_text"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="This Week's Plan"
+                    style="@style/TextSubheader"
+                    android:textColor="@color/strava_orange"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="8dp"
+                    android:background="@color/strava_divider"/>
+
                 <LinearLayout
                     android:id="@+id/weekContainer"
                     android:layout_width="match_parent"
@@ -65,19 +120,18 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Feedback Button -->
         <Button
             android:id="@+id/feedbackButton"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="16dp"
             android:text="@string/show_feedback"
             android:textAllCaps="false"
             android:textSize="16sp"
-            android:padding="12dp"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="@color/button_bg"
-        android:textColor="@android:color/white"
-        android:elevation="6dp"
-        android:layout_gravity="center"/>
+            android:padding="16dp"
+            android:backgroundTint="@color/strava_orange"
+            android:textColor="@color/strava_light_text"
+            android:elevation="4dp"
+            style="@style/TextSubheader"/>
     </LinearLayout>
 </ScrollView>

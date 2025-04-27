@@ -1,42 +1,95 @@
 package com.example.smartmarathonrunningapp_project;
-
 import android.util.Log;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.example.smartmarathonrunningapp_project.utils.DateUtils;
+import com.google.gson.Gson;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-
-public class AutoAdjuster {
+import java.util.stream.Collectors;
+public class AutoAdjuster
+{
     private static final String TAG = "AutoAdjuster";
-    private static final float PACE_TOLERANCE = 0.05f;
-    private static final float DISTANCE_TOLERANCE = 0.15f;
-    private static final float HR_THRESHOLD = 150f;
-    private static final float MAX_DISTANCE = 26.2f;
 
-    private static final float HIGH_TRIMP_THRESHOLD = 350f; // Weekly TRIMP threshold
+    // Updated thresholds with more sophisticated analysis
+    private static final float HIGH_ACUTE_TRIMP_THRESHOLD = 350f; // 7-day TRIMP threshold
     private static final float FATIGUE_RATIO_THRESHOLD = 1.15f;
 
+    // New constants for data analysis
+    private static final int MIN_RUNS_FOR_ACCURACY = 5;
+    private static final int DAYS_FOR_ACUTE_LOAD = 7;
+    private static final int DAYS_FOR_CHRONIC_LOAD = 28;
+
     // Entry point — now supports "structured" or "free" mode
-    public TrainingPlan adjustPlan(TrainingPlan plan, List<Activity> recentRuns) {
-        if (recentRuns == null || recentRuns.isEmpty()) return plan;
+    public TrainingPlan adjustPlan(TrainingPlan currentPlan, List<Activity> recentRuns, TrainingPlan originalPlan) {
+        if (recentRuns == null || recentRuns.isEmpty()) return currentPlan;
 
-        // Calculate weekly TRIMP load
-        float weeklyTRIMP = calculateWeeklyTRIMP(recentRuns);
+        // Filter and analyze runs with proper time windows
+        List<Activity> filteredRuns = filterRecentRuns(recentRuns, DAYS_FOR_ACUTE_LOAD + DAYS_FOR_CHRONIC_LOAD);
 
-        // Calculate fatigue ratio
-        float fatigueRatio = calculateFatigueRatio(recentRuns);
-
-        // Estimate VO2Max from best recent run
-        float vo2max = estimateCurrentFitness(recentRuns);
-
-        // Apply adjustments based on metrics
-        if (fatigueRatio > FATIGUE_RATIO_THRESHOLD || weeklyTRIMP > HIGH_TRIMP_THRESHOLD) {
-            reduceWeekIntensity(plan, 0.85f);
-            plan.setAdjustmentNote("Recovery week: High fatigue (TRIMP=" + weeklyTRIMP + ")");
+        if (filteredRuns.size() < MIN_RUNS_FOR_ACCURACY) {
+            Log.w(TAG, "Insufficient data - only " + filteredRuns.size() + " runs available");
+            // Fall back to simpler adjustment if needed
+            return basicAdjustment(currentPlan, recentRuns, originalPlan);
         }
 
-        return plan;
+        // Reset to original values before applying new adjustments
+        TrainingPlan adjustedPlan = deepCopyPlan(originalPlan);
+
+        // Calculate training loads with proper time windows
+        float acuteTRIMP = calculateTRIMPForPeriod(filteredRuns, DAYS_FOR_ACUTE_LOAD);
+        float chronicTRIMP = calculateTRIMPForPeriod(filteredRuns, DAYS_FOR_CHRONIC_LOAD);
+        float fatigueRatio = acuteTRIMP / chronicTRIMP;
+
+        // More robust fitness estimation
+        float vo2max = estimateCurrentFitness(filteredRuns);
+
+        // Apply adjustments based on the analysis
+        if (fatigueRatio > FATIGUE_RATIO_THRESHOLD || acuteTRIMP > HIGH_ACUTE_TRIMP_THRESHOLD) {
+            reduceWeekIntensity(adjustedPlan, 0.85f);
+            adjustedPlan.setAdjustmentNote(String.format(Locale.US,
+                    "Recovery week: Acute TRIMP=%.1f, Chronic TRIMP=%.1f, Ratio=%.2f",
+                    acuteTRIMP, chronicTRIMP, fatigueRatio));
+        }
+        return adjustedPlan;
     }
+
+    private float calculateTRIMPForPeriod(List<Activity> runs, int days) {
+        List<Activity> periodRuns = filterRecentRuns(runs, days);
+        return periodRuns.stream()
+                .map(r -> TRIMP.calculate(
+                        r.getMoving_time()/60f,
+                        r.getAverage_heartrate(),
+                        r.getResting_heartrate(),
+                        r.getMax_heartrate(),
+                        r.isMale()
+                ))
+                .reduce(0f, Float::sum);
+    }
+
+    private List<Activity> filterRecentRuns(List<Activity> runs, int maxDays) {
+        long cutoff = System.currentTimeMillis() - (maxDays * 24 * 60 * 60 * 1000L);
+        return runs.stream()
+                .filter(run -> run.getStart_date() != null &&
+                        DateUtils.parseDate(run.getStart_date()).getTime() > cutoff)
+                .collect(Collectors.toList());
+    }
+
+    private TrainingPlan deepCopyPlan(TrainingPlan plan) {
+        Gson gson = new Gson();
+        return gson.fromJson(gson.toJson(plan), TrainingPlan.class);
+    }
+    private TrainingPlan basicAdjustment(TrainingPlan currentPlan, List<Activity> recentRuns, TrainingPlan originalPlan) {
+        TrainingPlan adjustedPlan = deepCopyPlan(originalPlan);
+        float weeklyTRIMP = calculateWeeklyTRIMP(recentRuns);
+        float fatigueRatio = calculateFatigueRatio(recentRuns);
+
+        if (fatigueRatio > FATIGUE_RATIO_THRESHOLD || weeklyTRIMP > HIGH_ACUTE_TRIMP_THRESHOLD) {
+            reduceWeekIntensity(adjustedPlan, 0.85f);
+            adjustedPlan.setAdjustmentNote("Basic adjustment: High fatigue (TRIMP=" + weeklyTRIMP + ")");
+        }
+        return adjustedPlan;
+    }
+
 
     private float calculateWeeklyTRIMP(List<Activity> runs) {
         return runs.stream()
@@ -52,212 +105,35 @@ public class AutoAdjuster {
 
 
     private float calculateFatigueRatio(List<Activity> runs) {
-        if (runs.size() < 3) return 1.0f;
+        if (runs.size() < 5) return 1.0f;
 
         Activity lastRun = runs.get(0);
-        float avgPace = runs.stream()
-                .limit(3)
-                .map(Activity::getPaceInSeconds)
-                .reduce(0f, Float::sum) / 3;
+        List<Activity> recentRuns = runs.stream().limit(5).collect(Collectors.toList());
 
-        float avgHR = runs.stream()
-                .limit(3)
+        float avgPace = recentRuns.stream()
+                .map(Activity::getPaceInSeconds)
+                .reduce(0f, Float::sum) / recentRuns.size();
+
+        float avgHR = recentRuns.stream()
                 .map(Activity::getAverage_heartrate)
-                .reduce(0f, Float::sum) / 3;
+                .reduce(0f, Float::sum) / recentRuns.size();
 
         return (lastRun.getPaceInSeconds() / avgPace) * 0.7f +
                 (lastRun.getAverage_heartrate() / avgHR) * 0.3f;
     }
-
-
     private float estimateCurrentFitness(List<Activity> runs) {
-        Activity bestRun = runs.stream()
-                .min((a,b) -> Float.compare(a.getPaceInSeconds(), b.getPaceInSeconds()))
-                .orElse(null);
+        // Take median of top 3 runs instead of just the best
+        List<Float> vo2Estimates = runs.stream()
+                .sorted(Comparator.comparing(Activity::getPaceInSeconds))
+                .limit(3)
+                .map(r -> VO2MaxEstimator.fromRacePerformance(r.getDistance(), r.getMoving_time()))
+                .sorted()
+                .collect(Collectors.toList());
 
-        return bestRun != null ?
-                VO2MaxEstimator.fromRacePerformance(bestRun.getDistance(), bestRun.getMoving_time()) :
-                0;
+        return vo2Estimates.size() > 1 ? vo2Estimates.get(1) :
+                vo2Estimates.isEmpty() ? 0 : vo2Estimates.get(0);
     }
 
-
-    // STRUCTURED mode — adjust just today's matching plan day
-    private void adjustNextScheduledDay(TrainingPlan plan, Activity latestRun) {
-        TrainingPlan.TrainingWeek currentWeek = plan.getTraining_weeks().get(0);
-        if (currentWeek == null || currentWeek.getTraining_plan() == null) return;
-
-        TrainingPlan.Days days = currentWeek.getTraining_plan();
-        String today = new SimpleDateFormat("EEEE", Locale.US).format(new Date()).toLowerCase();
-        TrainingPlan.Day todayDay = getDayByName(days, today);
-        if (todayDay != null) adjustDay(todayDay, latestRun);
-    }
-
-    // FREE mode — adjust all days in the current week
-    private void adjustAllDays(TrainingPlan plan, Activity latestRun) {
-        TrainingPlan.TrainingWeek currentWeek = plan.getTraining_weeks().get(0);
-        if (currentWeek == null || currentWeek.getTraining_plan() == null) return;
-
-        TrainingPlan.Days days = currentWeek.getTraining_plan();
-        adjustDay(days.getMonday(), latestRun);
-        adjustDay(days.getTuesday(), latestRun);
-        adjustDay(days.getWednesday(), latestRun);
-        adjustDay(days.getThursday(), latestRun);
-        adjustDay(days.getFriday(), latestRun);
-        adjustDay(days.getSaturday(), latestRun);
-        adjustDay(days.getSunday(), latestRun);
-    }
-
-    // Utility — map String to corresponding day
-    private TrainingPlan.Day getDayByName(TrainingPlan.Days days, String dayName) {
-        switch (dayName) {
-            case "monday": return days.getMonday();
-            case "tuesday": return days.getTuesday();
-            case "wednesday": return days.getWednesday();
-            case "thursday": return days.getThursday();
-            case "friday": return days.getFriday();
-            case "saturday": return days.getSaturday();
-            case "sunday": return days.getSunday();
-            default: return null;
-        }
-    }
-
-    // Core day adjustment logic — unchanged but polished
-    private void adjustDay(TrainingPlan.Day day, Activity latestRun) {
-        if (day == null || day.getPace() == null) return;
-
-        try {
-            day.setAdjustmentNote(null);
-            String workoutType = classifyWorkout(day.getExercise());
-            float actualPace = latestRun.getPaceInSeconds();
-            float actualDistance = Math.min(latestRun.getDistance(), MAX_DISTANCE * 1609.34f); // meters
-
-            switch (workoutType) {
-                case "RECOVERY": adjustRecoveryDay(day, actualPace, actualDistance); break;
-                case "INTERVAL": adjustIntervalDay(day, actualPace, actualDistance); break;
-                case "LONG_RUN": adjustLongRunDay(day, actualPace, actualDistance); break;
-                default: adjustGeneralDay(day, actualPace, actualDistance); break;
-            }
-
-            if (latestRun.getAverage_heartrate() > HR_THRESHOLD) {
-                reduceDayIntensity(day, 0.8f);
-                appendAdjustmentNote(day, "Reduced intensity after high HR effort");
-            }
-
-            enforceSaneValues(day);
-        } catch (Exception e) {
-            Log.e(TAG, "Day adjustment failed", e);
-        }
-    }
-
-    // --- Supporting logic (same as before, just grouped nicely) ---
-
-    private void adjustRecoveryDay(TrainingPlan.Day day, float pace, float distance) {
-        adjustPace(day, pace, 0.2f);
-        adjustDistance(day, distance, 0.3f);
-        appendAdjustmentNote(day, "Recovery day adjustments");
-    }
-
-    private void adjustIntervalDay(TrainingPlan.Day day, float pace, float distance) {
-        if (day.getPace().contains("-")) {
-            String[] parts = day.getPace().split(" - ");
-            float base = parsePace(parts[0]);
-            float range = parsePace(parts[0]) - parsePace(parts[1]);
-            float adjusted = calculateAdjustedPace(base, pace, 0.3f);
-            day.setPace(formatPace(adjusted) + " - " + formatPace(adjusted - range));
-        }
-        adjustDistance(day, distance, 0.1f);
-        appendAdjustmentNote(day, "Interval workout adjustments");
-    }
-
-    private void adjustLongRunDay(TrainingPlan.Day day, float pace, float distance) {
-        if (day.getExercise().toLowerCase().contains("marathon-pace")) {
-            String[] parts = day.getDistance().split(" w/ ");
-            float total = Math.min(parseDistance(parts[0]), MAX_DISTANCE);
-            float mp = (parts.length > 1) ? Math.min(parseDistance(parts[1].split(" @")[0]), total) : total * 0.6f;
-
-            float newTotal = Math.max(8.0f, total * 0.9f);
-            float newMp = Math.min(mp * 0.9f, newTotal * 0.7f);
-
-            day.setDistance(String.format(Locale.US, "%.1f mi w/ %.1f @ marathon race pace", newTotal, newMp));
-        } else {
-            adjustPace(day, pace, 0.3f);
-            adjustDistance(day, distance, 0.2f);
-        }
-        appendAdjustmentNote(day, "Long run adjustments");
-    }
-
-    private void adjustGeneralDay(TrainingPlan.Day day, float pace, float distance) {
-        adjustPace(day, pace, 0.3f);
-        adjustDistance(day, distance, 0.15f);
-        appendAdjustmentNote(day, "General workout adjustments");
-    }
-
-    private void adjustPace(TrainingPlan.Day day, float actual, float factor) {
-        float target = parsePace(day.getPace().split(" - ")[0]);
-        float diff = Math.abs(actual - target) / target;
-        if (diff > PACE_TOLERANCE) {
-            float newPace = target + (actual - target) * factor;
-            day.setPace(formatPace(newPace));
-        }
-    }
-
-    private void adjustDistance(TrainingPlan.Day day, float actualMeters, float factor) {
-        if (day.getDistance() != null && day.getDistance().contains("mi")) {
-            float target = parseDistance(day.getDistance());
-            float actualMiles = actualMeters / 1609.34f;
-            float ratio = actualMiles / target;
-
-            if (Math.abs(1 - ratio) > DISTANCE_TOLERANCE) {
-                float newDist = target * (0.9f + factor);
-                day.setDistance(String.format(Locale.US, "%.1f mi", newDist));
-            }
-        }
-    }
-
-    private void reduceDayIntensity(TrainingPlan.Day day, float factor) {
-        try {
-            if (day.getDistance() != null && day.getDistance().contains("mi")) {
-                float dist = parseDistance(day.getDistance());
-                day.setDistance(String.format(Locale.US, "%.1f mi", dist * factor));
-            }
-            if (day.getPace() != null) {
-                float pace = parsePace(day.getPace().split(" - ")[0]);
-                day.setPace(formatPace(pace * 1.05f));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Intensity reduction failed", e);
-        }
-    }
-
-    private void enforceSaneValues(TrainingPlan.Day day) {
-        try {
-            if (day.getDistance() != null && day.getDistance().contains("mi")) {
-                float dist = parseDistance(day.getDistance());
-                dist = Math.max(0.5f, Math.min(dist, MAX_DISTANCE));
-                day.setDistance(String.format(Locale.US, "%.1f mi", dist));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Sanity check failed", e);
-            day.setDistance("5.0 mi");
-        }
-    }
-
-    private void appendAdjustmentNote(TrainingPlan.Day day, String note) {
-        if (day.getAdjustmentNote() == null) {
-            day.setAdjustmentNote(note);
-        } else if (!day.getAdjustmentNote().contains(note)) {
-            day.setAdjustmentNote(day.getAdjustmentNote() + "; " + note);
-        }
-    }
-
-    private String classifyWorkout(String exercise) {
-        if (exercise == null) return "GENERAL";
-        String e = exercise.toLowerCase();
-        if (e.contains("recovery")) return "RECOVERY";
-        if (e.contains("interval") || e.contains("strides") || e.contains("speed")) return "INTERVAL";
-        if (e.contains("long run") || e.contains("marathon")) return "LONG_RUN";
-        return "GENERAL";
-    }
 
     private float parsePace(String paceStr) {
         try {
@@ -271,10 +147,32 @@ public class AutoAdjuster {
 
     private float parseDistance(String distanceStr) {
         try {
+            // Handle empty or null strings
+            if (distanceStr == null || distanceStr.trim().isEmpty()) {
+                return 0f;
+            }
+
+            // Remove "mi" if present
+            distanceStr = distanceStr.replace("mi", "").trim();
+
+            // Check if it's a range (contains "-")
+            if (distanceStr.contains("-")) {
+                String[] parts = distanceStr.split("-");
+                // Take the first value in the range (or average if preferred)
+                return Float.parseFloat(parts[0].trim());
+            }
+
+            // Check if it's a complex description (e.g., "13 mi w/ 8 @ marathon race pace")
+            if (distanceStr.contains("w/")) {
+                String[] parts = distanceStr.split("w/");
+                return Float.parseFloat(parts[0].trim());
+            }
+
+            // Default case - simple number
             return Float.parseFloat(distanceStr.split(" ")[0]);
         } catch (Exception e) {
             Log.e(TAG, "Failed to parse distance: " + distanceStr, e);
-            return 5.0f;
+            return 5.0f; // Default fallback value
         }
     }
 
@@ -282,10 +180,6 @@ public class AutoAdjuster {
         int minutes = (int)(seconds / 60);
         int secs = (int)(seconds % 60);
         return String.format(Locale.US, "%d:%02d", minutes, secs);
-    }
-
-    private float calculateAdjustedPace(float targetPace, float actualPace, float factor) {
-        return targetPace + (actualPace - targetPace) * factor;
     }
 
     private void reduceWeekIntensity(TrainingPlan plan, float factor) {
@@ -306,6 +200,12 @@ public class AutoAdjuster {
 
         try {
             if (day.getDistance() != null && day.getDistance().contains("mi")) {
+                // Skip adjustment for special workout types
+                if (day.getExercise().toLowerCase().contains("tune-up") ||
+                        day.getExercise().toLowerCase().contains("race")) {
+                    return;
+                }
+
                 float dist = parseDistance(day.getDistance());
                 day.setDistance(String.format(Locale.US, "%.1f mi", dist * factor));
             }

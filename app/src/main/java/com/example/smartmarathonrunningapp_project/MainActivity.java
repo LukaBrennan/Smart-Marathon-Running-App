@@ -1,27 +1,25 @@
 package com.example.smartmarathonrunningapp_project;
-
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import com.example.smartmarathonrunningapp_project.managers.TrainingPlanManager;
-import com.google.gson.Gson;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import com.example.smartmarathonrunningapp_project.utils.DateUtils;
-
+import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private StravaRepository stravaRepository;
@@ -70,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response) {
             if (response.isSuccessful() && response.body() != null) {
-                stravaRepository.fetchActivities(response.body().getAccessToken(), 1, 100, new ActivitiesCallback());
+                stravaRepository.fetchActivities(response.body().getAccessToken(), 1, 30, new ActivitiesCallback());
             } else {
                 Log.e(TAG, "Token refresh failed. Code: " + response.code());
             }
@@ -98,15 +96,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void processFetchedActivities(List<Activity> activities) {
-            TrainingPlan trainingPlan = planManager.loadAdjustedPlan();
-            if (trainingPlan == null) {
-                trainingPlan = planManager.loadTrainingPlanFromAssets();
-            }
+            TrainingPlan originalPlan = planManager.loadAdjustedPlan();
+            TrainingPlan currentPlan = planManager.loadAdjustedPlan();
+
+            Log.d(TAG, "Original plan loaded: " + (originalPlan != null));
+            Log.d(TAG, "Adjusted plan loaded: " + (currentPlan != null));
+            Log.d(TAG, "Original and adjusted same: " + (originalPlan == currentPlan));
 
             performanceData.clear();
             List<Activity> validActivities = new ArrayList<>();
 
-            // First collect all valid activities
             for (Activity activity : activities) {
                 if (isValidActivity(activity)) {
                     validActivities.add(activity);
@@ -114,31 +113,107 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // Then adjust the plan once with all activities
+            Log.d(TAG, "Valid activities count: " + validActivities.size());
+
             if (!validActivities.isEmpty()) {
-                trainingPlan = autoAdjuster.adjustPlan(trainingPlan, validActivities);
+                TrainingPlan newPlan = autoAdjuster.adjustPlan(currentPlan, validActivities, originalPlan);
+                Log.d(TAG, "Plan after adjustment: " + newPlan.getAdjustmentNote());
+                planManager.saveAdjustedPlan(newPlan);
+                currentPlan = newPlan;
             }
 
-            planManager.saveAdjustedPlan(trainingPlan);
-            updateUI(trainingPlan);
+            updateUI(currentPlan);
         }
 
         @SuppressLint("SetTextI18n")
         private void updateUI(TrainingPlan trainingPlan) {
+            Log.d(TAG, "Updating UI with plan: " + trainingPlan.getAdjustmentNote());
             LinearLayout weekContainer = findViewById(R.id.weekContainer);
             weekContainer.removeAllViews();
 
-            for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks()) {
-                addWeekView(weekContainer, week);
-                addDayViews(weekContainer, week);
+            setupWeekStats();
+
+            if (trainingPlan != null && trainingPlan.getTraining_weeks() != null) {
+                Log.d(TAG, "Number of weeks in plan: " + trainingPlan.getTraining_weeks().size());
+                for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks()) {
+                    addWeekView(weekContainer, week);
+                    addDayViews(weekContainer, week);
+                }
+            } else {
+                Log.e(TAG, "Plan or training weeks is null");
             }
+        }
+
+        private void setupWeekStats() {
+            LinearLayout statsContainer = findViewById(R.id.weekStatsContainer);
+            statsContainer.removeAllViews();
+
+            // Get current week (using most recent week from performance data)
+            List<String> weeks = new ArrayList<>(performanceData.getRunData().keySet());
+            weeks.sort(Collections.reverseOrder());
+
+            if (weeks.isEmpty())
+            {
+                // For when there is no data to collect, display the following
+                addStatView(statsContainer, "0 km", "Distance");
+                addStatView(statsContainer, "--", "Avg Pace");
+                addStatView(statsContainer, "--", "Avg HR");
+                return;
+            }
+
+            String currentWeek = weeks.get(0); // Most recent week
+            float totalDistance = performanceData.getWeeklyDistance(currentWeek);
+            float avgPace = performanceData.getWeeklyAvgPace(currentWeek);
+            float avgHR = performanceData.getWeeklyAvgHR(currentWeek);
+
+            // Format values
+            String distanceText = String.format(Locale.getDefault(), "%.1f km", totalDistance / 1000);
+            String paceText = DailyFeedbackGenerator.formatPace(avgPace) + "/km";
+            String hrText = String.format(Locale.getDefault(), "%.0f bpm", avgHR);
+
+            // Update UI
+            addStatView(statsContainer, distanceText, "Distance");
+            addStatView(statsContainer, paceText, "Avg Pace");
+            addStatView(statsContainer, hrText, "Avg HR");
+        }
+
+        private void addStatView(LinearLayout container, String value, String label) {
+            LinearLayout statLayout = new LinearLayout(MainActivity.this);  // Use MainActivity.this as context
+            statLayout.setOrientation(LinearLayout.VERTICAL);
+            statLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+            ));
+            statLayout.setGravity(Gravity.CENTER);
+            statLayout.setPadding(8, 8, 8, 8);
+
+            TextView valueView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+            valueView.setText(value);
+            valueView.setTextSize(18);
+            valueView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
+            valueView.setTypeface(null, Typeface.BOLD);
+            valueView.setGravity(Gravity.CENTER);
+
+            TextView labelView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+            labelView.setText(label);
+            labelView.setTextSize(12);
+            labelView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
+            labelView.setAlpha(0.7f);
+            labelView.setGravity(Gravity.CENTER);
+
+            statLayout.addView(valueView);
+            statLayout.addView(labelView);
+            container.addView(statLayout);
         }
 
         @SuppressLint("SetTextI18n")
         private void addWeekView(LinearLayout container, TrainingPlan.TrainingWeek week) {
-            TextView weekTextView = new TextView(MainActivity.this);
-            weekTextView.setText("Week: " + week.getWeek());
+            TextView weekTextView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+            weekTextView.setText("Week " + week.getWeek());
             weekTextView.setTextSize(18);
+            weekTextView.setTypeface(null, Typeface.BOLD);
+            weekTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_orange));
             weekTextView.setPadding(0, 16, 0, 8);
             container.addView(weekTextView);
         }
@@ -157,20 +232,48 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("SetTextI18n")
         private void addDayView(LinearLayout container, TrainingPlan.Day day, String dayName) {
             if (day != null) {
-                TextView dayTextView = new TextView(MainActivity.this);
-                String text = dayName + ": " + day.getExercise() + " - " +
-                        day.getDistance() + " @ " + day.getPace();
+                Log.d(TAG, "Adding day: " + dayName + " - " + day.getExercise());
+                LinearLayout dayLayout = new LinearLayout(MainActivity.this);  // Use MainActivity.this as context
+                dayLayout.setOrientation(LinearLayout.VERTICAL);
+                dayLayout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.day_item_bg));
+                dayLayout.setPadding(16, 12, 16, 12);
 
-                // Show adjustment note if exists
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                params.setMargins(0, 0, 0, 8);
+                dayLayout.setLayoutParams(params);
+
+                TextView dayNameView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+                dayNameView.setText(dayName);
+                dayNameView.setTextSize(16);
+                dayNameView.setTypeface(null, Typeface.BOLD);
+                dayNameView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
+                dayLayout.addView(dayNameView);
+
+                TextView exerciseView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+                exerciseView.setText(day.getExercise());
+                exerciseView.setTextSize(14);
+                exerciseView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
+                dayLayout.addView(exerciseView);
+
+                TextView detailsView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+                detailsView.setText(day.getDistance() + " @ " + day.getPace());
+                detailsView.setTextSize(14);
+                detailsView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
+                dayLayout.addView(detailsView);
+
                 if (day.getAdjustmentNote() != null) {
-                    text += "\n[Adjusted: " + day.getAdjustmentNote() + "]";
-                    dayTextView.setTextColor(Color.BLUE);
+                    TextView noteView = new TextView(MainActivity.this);  // Use MainActivity.this as context
+                    noteView.setText("✓ Adjusted: " + day.getAdjustmentNote());
+                    noteView.setTextSize(12);
+                    noteView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_orange));
+                    noteView.setPadding(0, 4, 0, 0);
+                    dayLayout.addView(noteView);
                 }
 
-                dayTextView.setText(text);
-                dayTextView.setTextSize(16);
-                dayTextView.setPadding(16, 8, 16, 8);
-                container.addView(dayTextView);
+                container.addView(dayLayout);
             }
         }
 

@@ -14,7 +14,7 @@ public class Activity {
     private float max_heartrate;
     private float max_speed;
     private List<Float> start_latlng;
-    private float resting_heartrate = 50;
+    private float resting_heartrate = 60;
     private boolean isMale = true;
     public float getMax_speed() {
         return max_speed;

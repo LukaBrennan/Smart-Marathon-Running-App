@@ -1,25 +1,21 @@
 package com.example.smartmarathonrunningapp_project;
-
 import com.example.smartmarathonrunningapp_project.utils.DateUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import android.util.Log;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-public class PerformanceData {
-    // Structure: ActivityType -> Week -> Day -> Metrics
+public class PerformanceData
+{
     private final Map<String, Map<String, Map<String, Map<String, Float>>>> data = new HashMap<>();
 
     public void addActivity(Activity activity) {
         try {
             String type = activity.getType();
             String week = DateUtils.getWeekOfYear(activity.getStart_date());
-            String day = DateUtils.getDayOfWeek(activity.getStart_date());
+            String day = activity.getStart_date();  // Store full date string
 
             Map<String, Float> metrics = new HashMap<>();
             metrics.put("distance", activity.getDistance());
@@ -74,22 +70,93 @@ public class PerformanceData {
         return result;
     }
 
-    public List<String> getActivityTypes() {
-        return new ArrayList<>(data.keySet());
+
+    public float getWeeklyDistance(String week) {
+        Map<String, Map<String, Float>> weekData = getRunData().get(week);
+        if (weekData == null) return 0f;
+
+        float totalDistance = 0f;
+        for (Map<String, Float> run : weekData.values()) {
+            totalDistance += run.getOrDefault("distance", 0f);
+        }
+        return totalDistance;
     }
 
-    public List<String> getWeeks(String activityType) {
-        if (data.containsKey(activityType)) {
-            return new ArrayList<>(data.get(activityType).keySet());
+    public float getWeeklyAvgPace(String week) {
+        Map<String, Map<String, Float>> weekData = getRunData().get(week);
+        if (weekData == null || weekData.isEmpty()) return 0f;
+
+        float totalPace = 0f;
+        int runCount = 0;
+        for (Map<String, Float> run : weekData.values()) {
+            Float pace = run.get("pace");
+            if (pace != null) {
+                totalPace += pace;
+                runCount++;
+            }
         }
-        return new ArrayList<>();
+        return runCount > 0 ? totalPace / runCount : 0f;
     }
 
-    public Map<String, Map<String, Float>> getWeeklyData(String activityType, String week) {
-        try {
-            return data.get(activityType).get(week);
-        } catch (NullPointerException e) {
-            return null;
+    public float getWeeklyAvgHR(String week) {
+        Map<String, Map<String, Float>> weekData = getRunData().get(week);
+        if (weekData == null || weekData.isEmpty()) return 0f;
+
+        float totalHR = 0f;
+        int runCount = 0;
+        for (Map<String, Float> run : weekData.values()) {
+            Float hr = run.get("heart_rate");
+            if (hr != null) {
+                totalHR += hr;
+                runCount++;
+            }
         }
+        return runCount > 0 ? totalHR / runCount : 0f;
     }
+
+
+    public static class PerformanceMetrics {
+        public float acuteLoad;  // 7-day load
+        public float chronicLoad; // 28-day load
+    }
+
+    public PerformanceMetrics calculatePerformanceMetrics() {
+        PerformanceMetrics metrics = new PerformanceMetrics();
+        metrics.acuteLoad = calculateLoadForPeriod(7);
+        metrics.chronicLoad = calculateLoadForPeriod(28);
+        return metrics;
+    }
+
+    private float calculateLoadForPeriod(int days) {
+        long cutoff = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L);
+        float total = 0f;
+
+        for (Map<String, Map<String, Float>> weekData : getRunData().values()) {
+            for (Map<String, Float> run : weekData.values()) {
+                if (run.containsKey("trimp")) {
+                    total += run.get("trimp");
+                }
+            }
+        }
+        return total;
+    }
+
+    public Map<String, Map<String, Map<String, Map<String, Float>>>> getData() {
+        return data;
+    }
+
+    public int getCurrentStreak() {
+        int streak = 0;
+        for (Map<String, Map<String, Float>> weekData : getRunData().values()) {
+            streak += weekData.size();
+        }
+        return Math.min(streak, 7);
+    }
+
+    public String getRelativeEffortLevel(float trimp) {
+        if (trimp < 50) return "easy";
+        if (trimp < 100) return "moderate";
+        return "hard";
+    }
+
 }
