@@ -14,7 +14,7 @@ public class Activity {
     private float max_heartrate;
     private float max_speed;
     private List<Float> start_latlng;
-    private float resting_heartrate = 60;
+    private float resting_heartrate = 60;   //  STRAVA does not hold this value, do for TRIMP calculations, an estimated resting HR is used
     private boolean isMale = true;
     public float getMax_speed() {
         return max_speed;
@@ -130,7 +130,6 @@ public class Activity {
         this.isMale = isMale;
     }
 
-    // Converts average speed (m/s) to pace (min/mile)
     public float getPaceInSeconds() {
         float metersPerMile = 1609.34f;
         return distance > 0 ? (moving_time / (distance / metersPerMile)) : 0;

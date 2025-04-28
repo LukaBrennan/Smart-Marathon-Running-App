@@ -19,4 +19,13 @@
     <string name="feedback_report">Feedback Report</string>
     <string name="twelve_week_plan">12-Week Training Plan</string>
     <string name="show_feedback">Show Feedback</string>
+    <string name="got_it">GOT IT</string>
+    <string name="max_hr">Max HR</string>
+    <string name="avg_hr">Avg HR</string>
+    <string name="effort">Effort</string>
+    <string name="pace">Pace</string>
+    <string name="distance">Distance</string>
+    <string name="run_summary">Run Summary</string>
+    <string name="current_week">Current Week</string>
+    <string name="this_week_s_plan">This Week\'s Plan</string>
 </resources>

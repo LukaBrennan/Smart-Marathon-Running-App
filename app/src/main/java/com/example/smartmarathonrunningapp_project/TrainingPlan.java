@@ -1,11 +1,14 @@
 package com.example.smartmarathonrunningapp_project;
-
 import java.util.List;
-
-public class TrainingPlan {
+    //  This class represents a complete training plan structure containing, multiple training weeks, daily workout details.
+public class TrainingPlan
+{
+    //  This is a list of training weeks that make up the complete plan
     private List<TrainingWeek> training_weeks;
+    //  Note explaining any automatic adjustments made to the plan
     private String adjustmentNote;
-    public List<TrainingWeek> getTraining_weeks() {
+    public List<TrainingWeek> getTraining_weeks()
+    {
         return training_weeks;
     }
 
@@ -20,8 +23,9 @@ public class TrainingPlan {
     public void setAdjustmentNote(String adjustmentNote) {
         this.adjustmentNote = adjustmentNote;
     }
-
-    public static class TrainingWeek {
+    //  Represents a single week within the training plan
+    public static class TrainingWeek
+    {
         private String week;
         private Days training_plan;
 
@@ -41,8 +45,9 @@ public class TrainingPlan {
             this.training_plan = training_plan;
         }
     }
-
-    public static class Days {
+    //  Container for all training days in a week
+    public static class Days
+    {
         private Day Monday;
         private Day Tuesday;
         private Day Wednesday;
@@ -107,8 +112,9 @@ public class TrainingPlan {
             Sunday = sunday;
         }
     }
-
-    public static class Day {
+    //  Represents a single day's workout details
+    public static class Day
+    {
         private String exercise;
         private String distance;
         private String pace;

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
-    //  This class displays the running performance feedback for the runner, showing metrics like distance pace and effort level.
+    //  This class displays the running performance feedback for the runner, showing different metrics
 public class FeedbackActivity extends AppCompatActivity
 {
     //  Logging TAGS
@@ -57,6 +57,8 @@ public class FeedbackActivity extends AppCompatActivity
         TextView effortView = findViewById(R.id.effortValue);
         TextView streakView = findViewById(R.id.streakValue);
         TextView achievementView = findViewById(R.id.achievementText);
+        TextView avgHRView = findViewById(R.id.avgHRValue);
+        TextView maxHRView = findViewById(R.id.maxHRValue);
         //  Getting metrics from the most recent run
         Map<String, Float> currentRun = getMostRecentRun(performanceData);
         if (currentRun.isEmpty())
@@ -73,9 +75,13 @@ public class FeedbackActivity extends AppCompatActivity
         Float distance = currentRun.get("distance");
         Float pace = currentRun.get("pace");
         Float trimp = currentRun.get("trimp");
+        Float avgHR = currentRun.get("heart_rate");
+        Float maxHR = currentRun.get("max_heartrate");
         //  Displaying logic
         distanceView.setText(distance != null ? String.format(Locale.getDefault(), "%.1f km", distance / 1000) : "N/A");
         paceView.setText(pace != null ? formatPace(pace) + "/km" : "N/A");
+        avgHRView.setText(avgHR != null ? String.format(Locale.getDefault(), "%.0f bpm", avgHR) : "N/A");
+        maxHRView.setText(maxHR != null ? String.format(Locale.getDefault(), "%.0f bpm", maxHR) : "N/A");
         if (trimp != null)
         {
             String effortLevel = performanceData.getRelativeEffortLevel(trimp);
@@ -148,6 +154,7 @@ public class FeedbackActivity extends AppCompatActivity
         //  Build the feedback string
         feedback.append(String.format(Locale.getDefault(),"Nice steady %.1f km run! ", distanceKm));
         feedback.append(String.format(Locale.getDefault(),"You maintained a pace of %s/km.%n%n", formatPace(paceSecPerKm)));
+
         //  Add effort information
         String effortLevel = performanceData.getRelativeEffortLevel(trimp);
         feedback.append(String.format(Locale.getDefault(),"Relative Effort: %.0f (%s)%n", trimp, effortLevel));
@@ -166,6 +173,7 @@ public class FeedbackActivity extends AppCompatActivity
         }
         return feedback.toString();
     }
+
     //  Formats the pace from seconds per KM to min:sec per KM
     private String formatPace(float seconds)
     {

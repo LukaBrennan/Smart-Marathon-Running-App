@@ -1,11 +1,11 @@
 package com.example.smartmarathonrunningapp_project;
-
-public class TRIMP {
+public class TRIMP
+    //  This class tries to calculate the Training Impulse (TRIMP) of a runner
+    //  Resting heart rate is an estimate, as no data can be gotten from STRAVA, a possible estimate for a male runner was used
+{
     private static final float MALE_FACTOR = 0.64f;
     private static final float FEMALE_FACTOR = 0.86f;
-
-    public static float calculate(float durationMinutes, float avgHR,
-                                  float restingHR, float maxHR, boolean isMale) {
+    public static float calculate(float durationMinutes, float avgHR, float restingHR, float maxHR, boolean isMale) {
         if (restingHR <= 0 || maxHR <= 0 || avgHR <= restingHR) return 0;
 
         float hrReserve = (avgHR - restingHR) / (maxHR - restingHR);

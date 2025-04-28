@@ -21,9 +21,9 @@ public class StravaRepository
                 .build();
         apiService = retrofit.create(StravaApiService.class);
     }
+        //  This method used the access token and how many pages of data to collect
     public void fetchActivities(String accessToken, int page, int perPage, Callback<List<Activity>> callback)
     {
-        // Logging
         apiService.getUserActivities("Bearer " + accessToken, page, perPage)
                 .enqueue(new Callback<>()
                 {
@@ -41,11 +41,12 @@ public class StravaRepository
                     }
                 });
     }
+        //  Dynamically gets the refresh token and uses it when needed
     public void refreshAccessToken(Callback<TokenResponse> callback)
     {
         String clientId = "136889";
         String clientSecret = "965e30fa3ac626ee90d757a1d48d147fc80ed035";
-        String refreshToken = "e4f2b4dc8956373147a167e5afaa1e4be5e91dfb"; //Unique
+        String refreshToken = "e4f2b4dc8956373147a167e5afaa1e4be5e91dfb";   //  This is the unique refresh token for the runner
         Map<String, String> params = new HashMap<>();
         params.put("client_id", clientId);
         params.put("client_secret", clientSecret);
