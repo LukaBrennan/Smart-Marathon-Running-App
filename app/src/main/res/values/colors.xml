@@ -26,4 +26,8 @@
     <color name="strava_divider">#e0e0e0</color>
     <color name="card_light_grey">#FAFAFA</color>
     <color name="card_light_blue">#E3F2FD</color>
+    <color name="traffic_light_green">#4CAF50</color>
+    <color name="traffic_light_yellow">#FFEB3B</color>
+    <color name="traffic_light_red">#F44336</color>
+    <color name="traffic_light_gray">#9E9E9E</color>
 </resources>

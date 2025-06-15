@@ -1,6 +1,8 @@
 package com.example.smartmarathonrunningapp_project;
 import android.util.Log;
 import androidx.annotation.NonNull;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,5 +55,27 @@ public class StravaRepository
         params.put("refresh_token", refreshToken);
         params.put("grant_type", "refresh_token");
         apiService.getAccessToken(params).enqueue(callback);
+    }
+
+    public List<Activity> generateTestActivities() {
+        List<Activity> testActivities = new ArrayList<>();
+
+        // Create activities with varying performance levels
+        testActivities.add(createTestActivity("2025-06-10", 8000, 2400, 150, 180)); // GREEN
+        testActivities.add(createTestActivity("2025-06-11", 5000, 1800, 160, 185)); // YELLOW
+        testActivities.add(createTestActivity("2025-06-12", 10000, 4200, 170, 190)); // RED
+        return testActivities;
+    }
+
+    private Activity createTestActivity(String date, float distanceMeters, int movingTimeSec,
+                                        float avgHR, float maxHR) {
+        Activity activity = new Activity();
+        activity.setStart_date(date);
+        activity.setDistance(distanceMeters);
+        activity.setMoving_time(movingTimeSec);
+        activity.setAverage_heartrate(avgHR);
+        activity.setMax_heartrate(maxHR);
+        activity.setType("Run");
+        return activity;
     }
 }
