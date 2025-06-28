@@ -61,6 +61,8 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
 
     implementation("androidx.cardview:cardview:1.0.0")
+    testImplementation ("org.mockito:mockito-core:4.0.0")
+    testImplementation ("org.mockito:mockito-inline:4.0.0")
 
 
 }

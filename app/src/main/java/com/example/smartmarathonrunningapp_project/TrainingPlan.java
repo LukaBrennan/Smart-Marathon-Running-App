@@ -70,17 +70,24 @@ public class TrainingPlan {
         float actualDistMeters = completedRun.getDistance();
         float actualPaceSecKm = completedRun.getMoving_time() / (completedRun.getDistance() / 1000f);
 
+        // Calculate deviations (0-1 values)
         float distDeviation = Math.abs(actualDistMeters - plannedDistMeters) / plannedDistMeters;
         float paceDeviation = calculatePaceDeviation(actualPaceSecKm, plannedPaceRange);
 
-        if (distDeviation <= 0.10f && paceDeviation <= 0.10f) return "GREEN";
-        else if (distDeviation <= 0.20f && paceDeviation <= 0.20f) return "YELLOW";
-        else return "RED";
+        // More sensitive thresholds for pace
+        if (distDeviation <= 0.10f && paceDeviation <= 0.05f) {
+            return "GREEN";
+        } else if (distDeviation <= 0.20f && paceDeviation <= 0.15f) {
+            return "YELLOW";
+        } else {
+            return "RED";
+        }
     }
 
     private static float calculatePaceDeviation(float actualPace, float[] plannedRange) {
         if (plannedRange[0] == 0) return 0f;
 
+        // Calculate deviation from nearest bound
         if (actualPace < plannedRange[0]) {
             return (plannedRange[0] - actualPace) / plannedRange[0];
         } else if (actualPace > plannedRange[1]) {
@@ -131,6 +138,8 @@ public class TrainingPlan {
         private boolean completed;
         private String adjustmentNote;
         private String date;
+        private String dayOfWeek;
+
 
         public String getExercise() { return exercise; }
         public void setExercise(String exercise) { this.exercise = exercise; }
@@ -144,5 +153,15 @@ public class TrainingPlan {
         public void setAdjustmentNote(String note) { this.adjustmentNote = note; }
         public String getDate() { return date; }
         public void setDate(String date) { this.date = date; }
+
+        public String getDayOfWeek() {
+            return dayOfWeek;
+        }
+
+        public void setDayOfWeek(String dayOfWeek) {
+            this.dayOfWeek = dayOfWeek;
+        }
     }
+
+
 }

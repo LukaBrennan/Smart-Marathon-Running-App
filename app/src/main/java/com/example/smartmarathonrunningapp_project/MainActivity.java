@@ -1,4 +1,5 @@
 package com.example.smartmarathonrunningapp_project;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.PorterDuff;
@@ -7,7 +8,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,105 +16,81 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.example.smartmarathonrunningapp_project.managers.TrainingPlanManager;
 import com.example.smartmarathonrunningapp_project.utils.DateUtils;
-
+import java.util.*;
+import java.util.stream.Collectors;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-//  This class is responsible for managing STRAVA API connections, Handling training plan adjustments and reliving the feedback ui
 public class MainActivity extends AppCompatActivity {
+
     private static final String TAG = "MainActivity";
+
     private StravaRepository stravaRepository;
     private TrainingPlanManager planManager;
     private AutoAdjuster autoAdjuster;
     private final PerformanceData performanceData = new PerformanceData();
 
-    // Change these from final fields to regular fields
-    private int COLOR_GREEN;
-    private int COLOR_YELLOW;
-    private int COLOR_RED;
-    private int COLOR_GRAY;
+    private int COLOR_GREEN, COLOR_YELLOW, COLOR_RED, COLOR_GRAY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initColors();
+        initManagers();
+        setupUI();
+        fetchActivities();
+    }
 
-        // Initialize colors here
+    private void initColors() {
         COLOR_GREEN = ContextCompat.getColor(this, R.color.traffic_light_green);
         COLOR_YELLOW = ContextCompat.getColor(this, R.color.traffic_light_yellow);
         COLOR_RED = ContextCompat.getColor(this, R.color.traffic_light_red);
         COLOR_GRAY = ContextCompat.getColor(this, R.color.traffic_light_gray);
+    }
 
+    private void initManagers() {
         stravaRepository = new StravaRepository();
-        initializeDependencies();
-        setupUI();
-        fetchAndCheckActivities();
+        planManager = new TrainingPlanManager(this);
         autoAdjuster = new AutoAdjuster();
     }
 
-    //  Initializes required managers and services
-    private void initializeDependencies() {
-        planManager = new TrainingPlanManager(this);
-    }
-
-    //  Sets up UI components and event listeners
     private void setupUI() {
-        Button btnFeedback = findViewById(R.id.feedbackButton);
-        btnFeedback.setOnClickListener(v -> {
+        findViewById(R.id.feedbackButton).setOnClickListener(v -> {
             if (performanceData.isEmpty()) {
-                Toast.makeText(this, "Fetching latest data. Please wait a moment.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Fetching data. Please wait...", Toast.LENGTH_SHORT).show();
             } else {
-                launchFeedbackActivity();
+                Intent intent = new Intent(this, FeedbackActivity.class);
+                intent.putExtra("performanceData", performanceData.toJson());
+                startActivity(intent);
             }
         });
     }
 
-    //  Launches the feedback activity with current performance data
-    private void launchFeedbackActivity() {
-        Intent intent = new Intent(this, FeedbackActivity.class);
-        intent.putExtra("performanceData", performanceData.toJson());
-        startActivity(intent);
-    }
-
-    //  Initiates the process of fetching Strava activities
-    private void fetchAndCheckActivities() {   //  Refresh the access token if needed then fetch the activities
-        stravaRepository.refreshAccessToken(new TokenRefreshCallback());
-    }
-
-    //  Callback handler for token refresh operation
-    private final class TokenRefreshCallback implements Callback<TokenResponse> {
-        @Override
-        public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response) {   //  If successful fetch the activities
-            if (response.isSuccessful() && response.body() != null) {   //  Data gotten is the last 30 activates
-                stravaRepository.fetchActivities(response.body().getAccessToken(), 1, 30, new ActivitiesCallback());
-            } else {
-                Log.e(TAG, "Token refresh failed. Code: " + response.code());
+    private void fetchActivities() {
+        stravaRepository.refreshAccessToken(new Callback<TokenResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<TokenResponse> call, @NonNull Response<TokenResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    stravaRepository.fetchActivities(response.body().getAccessToken(), 1, 30, new ActivityFetchCallback());
+                } else {
+                    Log.e(TAG, "Token refresh failed: " + response.code());
+                }
             }
-        }
 
-        @Override
-        public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t) {
-            Log.e(TAG, "Token refresh failed", t);
-        }
+            @Override
+            public void onFailure(@NonNull Call<TokenResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "Token refresh failed", t);
+            }
+        });
     }
 
-    //  Callback handler for Strava activities fetch operation
-    private final class ActivitiesCallback implements Callback<List<Activity>> {
+    private class ActivityFetchCallback implements Callback<List<Activity>> {
         @Override
         public void onResponse(@NonNull Call<List<Activity>> call, @NonNull Response<List<Activity>> response) {
             if (response.isSuccessful() && response.body() != null) {
-                processFetchedActivities(response.body());
+                handleActivities(response.body());
             } else {
                 Log.e(TAG, "Failed to fetch activities. Code: " + response.code());
             }
@@ -125,285 +101,149 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to fetch activities", t);
         }
 
-        //  Processes fetched activities and updates training plan
-        private void processFetchedActivities(List<Activity> activities) {
+        private void handleActivities(List<Activity> activities) {
             TrainingPlan currentPlan = planManager.loadAdjustedPlan();
             performanceData.clear();
 
             List<Activity> validActivities = activities.stream()
-                    .filter(this::isValidActivity)
+                    .filter(a -> a.getDistance() > 100 && a.getMoving_time() > 60)
                     .peek(performanceData::addActivity)
                     .collect(Collectors.toList());
 
             if (!validActivities.isEmpty()) {
-                Map<TrainingPlan.Day, String> trafficLights = calculateTrafficLights(currentPlan, validActivities);
-                TrainingPlan newPlan = autoAdjuster.adjustPlan(currentPlan, validActivities, trafficLights);
-                planManager.saveAdjustedPlan(newPlan);
-                currentPlan = newPlan;
+                Map<TrainingPlan.Day, String> lights = calculateTrafficLights(currentPlan, validActivities);
+                TrainingPlan adjusted = autoAdjuster.adjustPlan(currentPlan, validActivities, lights);
+                planManager.saveAdjustedPlan(adjusted);
+                currentPlan = adjusted;
             }
 
             updateUI(currentPlan);
         }
-
-        //  Updates all UI components with current training plan
-        @SuppressLint("SetTextI18n")
-        private void updateUI(TrainingPlan trainingPlan) {
-            Log.d(TAG, "Updating UI with plan: " + trainingPlan.getAdjustmentNote());
-            LinearLayout weekContainer = findViewById(R.id.weekContainer);
-            weekContainer.removeAllViews();
-
-            setupWeekStats();   //  Update weekly statistics
-            //  Add all weeks and days from the training plan
-            if (trainingPlan.getTraining_weeks() != null) {
-                Log.d(TAG, "Number of weeks in plan: " + trainingPlan.getTraining_weeks().size());
-                for (TrainingPlan.TrainingWeek week : trainingPlan.getTraining_weeks()) {
-                    addWeekView(weekContainer, week);
-                    addDayViews(weekContainer, week);
-                }
-            } else {
-                Log.e(TAG, "Plan or training weeks is null");
-            }
-        }
-
-        //  Sets up the weekly statistics view
-        private void setupWeekStats() {
-            LinearLayout statsContainer = findViewById(R.id.weekStatsContainer);
-            statsContainer.removeAllViews();
-
-            // Get most recent week's data
-            List<String> weeks = new ArrayList<>(performanceData.getRunData().keySet());
-            weeks.sort(Collections.reverseOrder());
-
-            if (weeks.isEmpty()) {
-                // Placeholders for when there is no data
-                addStatView(statsContainer, "0 km", "Distance");
-                addStatView(statsContainer, "--", "Avg Pace");
-                addStatView(statsContainer, "--", "Avg HR");
-                return;
-            }
-            //  Calculate and display metrics for most recent week
-            String currentWeek = weeks.get(0);
-            float totalDistance = performanceData.getWeeklyDistance(currentWeek);
-            float avgPace = performanceData.getWeeklyAvgPace(currentWeek);
-            float avgHR = performanceData.getWeeklyAvgHR(currentWeek);
-
-            // Format and display values
-            String distanceText = String.format(Locale.getDefault(), "%.1f km", totalDistance / 1000);
-            String paceText = DailyFeedbackGenerator.formatPace(avgPace) + "/km";
-            String hrText = String.format(Locale.getDefault(), "%.0f bpm", avgHR);
-            addStatView(statsContainer, distanceText, "Distance");
-            addStatView(statsContainer, paceText, "Avg Pace");
-            addStatView(statsContainer, hrText, "Avg HR");
-        }
-
-        //  Creates a statistic view with value and label
-        private void addStatView(LinearLayout container, String value, String label) {
-            //  Create container layout
-            LinearLayout statLayout = new LinearLayout(MainActivity.this);
-            statLayout.setOrientation(LinearLayout.VERTICAL);
-            statLayout.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            statLayout.setGravity(Gravity.CENTER);
-            statLayout.setPadding(8, 8, 8, 8);
-            //  Value text
-            TextView valueView = new TextView(MainActivity.this);
-            valueView.setText(value);
-            valueView.setTextSize(18);
-            valueView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
-            valueView.setTypeface(null, Typeface.BOLD);
-            valueView.setGravity(Gravity.CENTER);
-            //  Label text
-            TextView labelView = new TextView(MainActivity.this);
-            labelView.setText(label);
-            labelView.setTextSize(12);
-            labelView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
-            labelView.setAlpha(0.7f);
-            labelView.setGravity(Gravity.CENTER);
-            //  Add views to layout
-            statLayout.addView(valueView);
-            statLayout.addView(labelView);
-            container.addView(statLayout);
-        }
-
-        //  Adds a week header to the training plan view
-        @SuppressLint("SetTextI18n")
-        private void addWeekView(LinearLayout container, TrainingPlan.TrainingWeek week) {
-            TextView weekTextView = new TextView(MainActivity.this);
-            weekTextView.setText("Week " + week.getWeek());
-            weekTextView.setTextSize(18);
-            weekTextView.setTypeface(null, Typeface.BOLD);
-            weekTextView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_orange));
-            weekTextView.setPadding(0, 16, 0, 8);
-            container.addView(weekTextView);
-        }
-
-        //  Adds all days for a week to the training plan view
-        @SuppressLint("SetTextI18n")
-        private void addDayViews(LinearLayout container, TrainingPlan.TrainingWeek week) {
-            addDayView(container, week.getTraining_plan().getMonday(), "Monday");
-            addDayView(container, week.getTraining_plan().getTuesday(), "Tuesday");
-            addDayView(container, week.getTraining_plan().getWednesday(), "Wednesday");
-            addDayView(container, week.getTraining_plan().getThursday(), "Thursday");
-            addDayView(container, week.getTraining_plan().getFriday(), "Friday");
-            addDayView(container, week.getTraining_plan().getSaturday(), "Saturday");
-            addDayView(container, week.getTraining_plan().getSunday(), "Sunday");
-        }
-
-        //  Creates a view for a single training day
-        @SuppressLint("SetTextI18n")
-        private void addDayView(LinearLayout container, TrainingPlan.Day day, String dayName) {
-            if (day != null) {
-                // Create day container
-                LinearLayout dayLayout = new LinearLayout(MainActivity.this);
-                dayLayout.setOrientation(LinearLayout.VERTICAL);
-                dayLayout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.day_item_bg));
-                dayLayout.setPadding(16, 12, 16, 12);
-
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                params.setMargins(0, 0, 0, 8);
-                dayLayout.setLayoutParams(params);
-
-                // Add traffic light
-                View trafficLight = new View(MainActivity.this);
-                trafficLight.setLayoutParams(new LinearLayout.LayoutParams(24, 24));
-                trafficLight.setBackgroundResource(R.drawable.ic_circle_background);
-                dayLayout.addView(trafficLight);
-
-                // Add day name
-                TextView dayNameView = new TextView(MainActivity.this);
-                dayNameView.setText(dayName);
-                dayNameView.setTextSize(16);
-                dayNameView.setTypeface(null, Typeface.BOLD);
-                dayNameView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
-                dayLayout.addView(dayNameView);
-
-                // Add exercise details
-                TextView exerciseView = new TextView(MainActivity.this);
-                exerciseView.setText(day.getExercise());
-                exerciseView.setTextSize(14);
-                exerciseView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
-                dayLayout.addView(exerciseView);
-
-                // Add distance and pace
-                TextView detailsView = new TextView(MainActivity.this);
-                detailsView.setText(day.getDistance() + " @ " + day.getPace());
-                detailsView.setTextSize(14);
-                detailsView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_dark_text));
-                dayLayout.addView(detailsView);
-
-                // Add adjustment note if present
-                if (day.getAdjustmentNote() != null) {
-                    TextView noteView = new TextView(MainActivity.this);
-                    noteView.setText("Adjusted: " + day.getAdjustmentNote());
-                    noteView.setTextSize(12);
-                    noteView.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.strava_orange));
-                    noteView.setPadding(0, 4, 0, 0);
-                    dayLayout.addView(noteView);
-                }
-
-                // Update traffic light status
-                updateTrafficLightStatus(day, dayName, trafficLight);
-
-                // Add click listener
-                dayLayout.setOnClickListener(v -> showDayDetails(day));
-
-                // Add to container
-                container.addView(dayLayout);
-            }
-        }
-
-        private void showDayDetails(TrainingPlan.Day day) {
-            String message = "Planned: " + day.getDistance() + " @ " + day.getPace();
-            if (day.getAdjustmentNote() != null) {
-                message += "\n\n" + day.getAdjustmentNote();
-            }
-            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-        }
-
-        private boolean isValidActivity(Activity activity) {
-            return activity.getDistance() > 100 && activity.getMoving_time() > 60;
-        }
     }
 
-    private void updateTrafficLightStatus(TrainingPlan.Day plannedDay, String dayName, View trafficLight) {
-        if (plannedDay == null) {
-            updateTrafficLightColor(trafficLight, "N/A");
-            return;
-        }
+    private void updateUI(TrainingPlan plan) {
+        LinearLayout weekContainer = findViewById(R.id.weekContainer);
+        weekContainer.removeAllViews();
+        setupWeekStats();
 
-        Map<String, Map<String, Map<String, Float>>> runData = performanceData.getRunData();
-
-        for (String week : runData.keySet()) {
-            Map<String, Map<String, Float>> weekRuns = runData.get(week);
-            for (String runKey : weekRuns.keySet()) {
-                // Get the date part from the runKey (assuming format is "Week XX-YYYY Monday")
-                String[] parts = runKey.split(" ");
-                if (parts.length >= 3 && parts[2].equalsIgnoreCase(dayName)) {
-                    Map<String, Float> runMetrics = weekRuns.get(runKey);
-                    Activity activity = createActivityFromMetrics(runMetrics);
-                    String status = TrainingPlan.getTrafficLightStatus(plannedDay, activity);
-                    updateTrafficLightColor(trafficLight, status);
-                    return;
+        if (plan.getTraining_weeks() != null) {
+            for (TrainingPlan.TrainingWeek week : plan.getTraining_weeks()) {
+                addWeekView(weekContainer, week);
+                for (TrainingPlan.Day day : getDaysOfWeek(week)) {
+                    addDayView(weekContainer, day);
                 }
             }
         }
-        updateTrafficLightColor(trafficLight, "N/A");
     }
 
-    private Activity createActivityFromMetrics(Map<String, Float> metrics) {
-        Activity activity = new Activity();
-        activity.setDistance(metrics.get("distance"));
-        activity.setMoving_time(metrics.get("moving_time").intValue());
-        activity.setAverage_heartrate(metrics.getOrDefault("heart_rate", 0f));
-        activity.setMax_heartrate(metrics.getOrDefault("max_heartrate", 0f));
-        return activity;
+    @SuppressLint("SetTextI18n")
+    private void addDayView(LinearLayout container, TrainingPlan.Day day) {
+        if (day == null) return;
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setBackground(ContextCompat.getDrawable(this, R.drawable.day_item_bg));
+        layout.setPadding(16, 12, 16, 12);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        // Traffic Light
+        View trafficLight = new View(this);
+        trafficLight.setLayoutParams(new LinearLayout.LayoutParams(24, 24));
+        trafficLight.setBackgroundResource(R.drawable.ic_circle_background);
+        updateTrafficLightColor(trafficLight, determineTrafficLight(day));
+        layout.addView(trafficLight);
+
+        layout.addView(makeText(day.getDayOfWeek(), 16, true));
+        layout.addView(makeText(day.getExercise(), 14, false));
+        layout.addView(makeText(day.getDistance() + " @ " + day.getPace(), 14, false));
+
+        if (day.getAdjustmentNote() != null) {
+            TextView note = makeText("Adjusted: " + day.getAdjustmentNote(), 12, false);
+            note.setTextColor(ContextCompat.getColor(this, R.color.strava_orange));
+            layout.addView(note);
+        }
+
+        container.addView(layout);
     }
 
-    private void updateTrafficLightColor(View trafficLight, String status) {
+    private TextView makeText(String text, int size, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextSize(size);
+        view.setTypeface(null, bold ? Typeface.BOLD : Typeface.NORMAL);
+        view.setTextColor(ContextCompat.getColor(this, R.color.strava_dark_text));
+        return view;
+    }
+    private String determineTrafficLight(TrainingPlan.Day day) {
+        if (day == null || day.getDayOfWeek() == null) return "N/A";
+
+        for (Map<String, Map<String, Float>> runs : performanceData.getRunData().values()) {
+            for (Map.Entry<String, Map<String, Float>> entry : runs.entrySet()) {
+                String key = entry.getKey();
+                if (key != null && key.endsWith(day.getDayOfWeek())) {
+                    Map<String, Float> run = entry.getValue();
+                    if (run == null) continue;
+
+                    Activity act = new Activity();
+                    act.setDistance(run.getOrDefault("distance", 0f));
+                    act.setMoving_time(run.getOrDefault("moving_time", 0f).intValue());
+                    act.setAverage_heartrate(run.getOrDefault("heart_rate", 0f));
+                    act.setMax_heartrate(run.getOrDefault("max_heartrate", 0f));
+                    return TrainingPlan.getTrafficLightStatus(day, act);
+                }
+            }
+        }
+
+        return "N/A";
+    }
+    private void updateTrafficLightColor(View view, String status) {
         int color = COLOR_GRAY;
         switch (status) {
             case "GREEN": color = COLOR_GREEN; break;
             case "YELLOW": color = COLOR_YELLOW; break;
             case "RED": color = COLOR_RED; break;
         }
-        trafficLight.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+        view.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
     }
-    private Map<TrainingPlan.Day, String> calculateTrafficLights(TrainingPlan plan, List<Activity> activities) {
-        Map<TrainingPlan.Day, String> statuses = new HashMap<>();
 
-        if (plan == null || activities == null) {
-            return statuses;
+    private void setupWeekStats() {
+        LinearLayout stats = findViewById(R.id.weekStatsContainer);
+        stats.removeAllViews();
+
+        List<String> weeks = new ArrayList<>(performanceData.getRunData().keySet());
+        weeks.sort(Collections.reverseOrder());
+
+        if (weeks.isEmpty()) {
+            addStat(stats, "0 km", "Distance");
+            addStat(stats, "--", "Avg Pace");
+            addStat(stats, "--", "Avg HR");
+            return;
         }
 
-        for (TrainingPlan.TrainingWeek week : plan.getTraining_weeks()) {
-            for (TrainingPlan.Day day : getDaysOfWeek(week)) {
-                if (day == null || day.getDate() == null) {
-                    continue;
-                }
-
-                String plannedDayName = DateUtils.getDayName(day.getDate());
-                if (plannedDayName.equals("Unknown")) {
-                    continue;
-                }
-
-                for (Activity activity : activities) {
-                    if (activity.getStart_date() == null) {
-                        continue;
-                    }
-
-                    String activityDayName = DateUtils.getDayName(activity.getStart_date());
-                    if (plannedDayName.equalsIgnoreCase(activityDayName)) {
-                        String status = TrainingPlan.getTrafficLightStatus(day, activity);
-                        statuses.put(day, status);
-                        break;
-                    }
-                }
-            }
-        }
-        return statuses;
+        String week = weeks.get(0);
+        addStat(stats, String.format("%.1f km", performanceData.getWeeklyDistance(week) / 1000), "Distance");
+        addStat(stats, DailyFeedbackGenerator.formatPace(performanceData.getWeeklyAvgPace(week)) + "/km", "Avg Pace");
+        addStat(stats, String.format("%.0f bpm", performanceData.getWeeklyAvgHR(week)), "Avg HR");
     }
+
+    private void addStat(LinearLayout container, String value, String label) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        layout.addView(makeText(value, 18, true));
+        layout.addView(makeText(label, 12, false));
+        container.addView(layout);
+    }
+
+    private void addWeekView(LinearLayout container, TrainingPlan.TrainingWeek week) {
+        TextView title = makeText("Week " + week.getWeek(), 18, true);
+        title.setTextColor(ContextCompat.getColor(this, R.color.strava_orange));
+        container.addView(title);
+    }
+
     private List<TrainingPlan.Day> getDaysOfWeek(TrainingPlan.TrainingWeek week) {
         return Arrays.asList(
                 week.getTraining_plan().getMonday(),
@@ -415,8 +255,26 @@ public class MainActivity extends AppCompatActivity {
                 week.getTraining_plan().getSunday()
         );
     }
+    private Map<TrainingPlan.Day, String> calculateTrafficLights(TrainingPlan plan, List<Activity> activities) {
+        Map<TrainingPlan.Day, String> statusMap = new HashMap<>();
+        if (plan == null || activities == null) return statusMap;
+
+        for (TrainingPlan.TrainingWeek week : plan.getTraining_weeks()) {
+            for (TrainingPlan.Day day : getDaysOfWeek(week)) {
+                if (day == null || day.getDate() == null) continue;
+                String plannedDay = DateUtils.getDayName(day.getDate());
+
+                for (Activity act : activities) {
+                    if (act.getStart_date() == null) continue;
+                    String actualDay = DateUtils.getDayName(act.getStart_date());
+                    if (plannedDay.equalsIgnoreCase(actualDay)) {
+                        statusMap.put(day, TrainingPlan.getTrafficLightStatus(day, act));
+                        break;
+                    }
+                }
+            }
+        }
+        return statusMap;
+    }
 }
-
-
-
 

@@ -28,4 +28,7 @@
     <string name="run_summary">Run Summary</string>
     <string name="current_week">Current Week</string>
     <string name="this_week_s_plan">This Week\'s Plan</string>
+    <string name="test_red_scenario">Test RED Scenario</string>
+    <string name="test_yellow_scenario">Test YELLOW Scenario</string>
+    <string name="test_green_scenario">Test GREEN Scenario</string>
 </resources>
