@@ -111,8 +111,9 @@ public class MainActivity extends AppCompatActivity {
                     .collect(Collectors.toList());
 
             if (!validActivities.isEmpty()) {
-                Map<TrainingPlan.Day, String> lights = calculateTrafficLights(currentPlan, validActivities);
+                Map<String, String> lights = calculateTrafficLights(currentPlan, validActivities);
                 TrainingPlan adjusted = autoAdjuster.adjustPlan(currentPlan, validActivities, lights);
+
                 planManager.saveAdjustedPlan(adjusted);
                 currentPlan = adjusted;
             }
@@ -255,8 +256,8 @@ public class MainActivity extends AppCompatActivity {
                 week.getTraining_plan().getSunday()
         );
     }
-    private Map<TrainingPlan.Day, String> calculateTrafficLights(TrainingPlan plan, List<Activity> activities) {
-        Map<TrainingPlan.Day, String> statusMap = new HashMap<>();
+    private Map<String, String> calculateTrafficLights(TrainingPlan plan, List<Activity> activities) {
+        Map<String, String> statusMap = new HashMap<>();
         if (plan == null || activities == null) return statusMap;
 
         for (TrainingPlan.TrainingWeek week : plan.getTraining_weeks()) {
@@ -268,13 +269,15 @@ public class MainActivity extends AppCompatActivity {
                     if (act.getStart_date() == null) continue;
                     String actualDay = DateUtils.getDayName(act.getStart_date());
                     if (plannedDay.equalsIgnoreCase(actualDay)) {
-                        statusMap.put(day, TrainingPlan.getTrafficLightStatus(day, act));
+                        statusMap.put(plannedDay, TrainingPlan.getTrafficLightStatus(day, act));
                         break;
                     }
                 }
             }
         }
+
         return statusMap;
     }
+
 }
 

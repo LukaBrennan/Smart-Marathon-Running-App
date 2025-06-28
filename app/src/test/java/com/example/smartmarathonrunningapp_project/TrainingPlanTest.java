@@ -3,7 +3,7 @@ package com.example.smartmarathonrunningapp_project;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-
+//  Redundant test cases
 public class TrainingPlanTest {
     @Test
     public void testTrafficLight_Green() {

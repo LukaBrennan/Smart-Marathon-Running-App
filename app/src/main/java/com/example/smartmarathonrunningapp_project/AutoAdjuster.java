@@ -27,8 +27,7 @@ public class AutoAdjuster {
         float fatigueRatio;
     }
 
-    public TrainingPlan adjustPlan(TrainingPlan currentPlan, List<Activity> recentRuns,
-                                   Map<TrainingPlan.Day, String> trafficLightStatuses) {
+    public TrainingPlan adjustPlan(TrainingPlan currentPlan, List<Activity> recentRuns, Map<String, String> trafficLightStatuses){
         if (recentRuns == null || recentRuns.isEmpty()) return currentPlan;
 
         TrainingLoadMetrics metrics = calculateTrainingLoadMetrics(recentRuns);
@@ -37,12 +36,27 @@ public class AutoAdjuster {
         adjustedPlan.setAdjustmentNote(createAdjustmentNote(metrics, needsRecovery));
 
         for (TrainingPlan.TrainingWeek week : adjustedPlan.getTraining_weeks()) {
-            for (TrainingPlan.Day day : getDaysOfWeek(week)){
+            TrainingPlan.Days days = week.getTraining_plan();
+
+            Map<String, TrainingPlan.Day> dayMap = Map.of(
+                    "Monday", days.getMonday(),
+                    "Tuesday", days.getTuesday(),
+                    "Wednesday", days.getWednesday(),
+                    "Thursday", days.getThursday(),
+                    "Friday", days.getFriday(),
+                    "Saturday", days.getSaturday(),
+                    "Sunday", days.getSunday()
+            );
+
+            for (Map.Entry<String, TrainingPlan.Day> entry : dayMap.entrySet()) {
+                String dayName = entry.getKey();
+                TrainingPlan.Day day = entry.getValue();
+
                 if (shouldAdjustDay(day)) {
                     if (needsRecovery) {
                         adjustForRecovery(day);
-                    } else if (trafficLightStatuses.containsKey(day)) {
-                        adjustForTrafficLight(day, trafficLightStatuses.get(day));
+                    } else if (trafficLightStatuses.containsKey(dayName)) {
+                        adjustForTrafficLight(day, trafficLightStatuses.get(dayName));
                     }
 
                     Activity match = findMatchingActivityForDay(day, recentRuns);
@@ -52,8 +66,10 @@ public class AutoAdjuster {
                 }
             }
         }
+
         return adjustedPlan;
     }
+
 
     private List<TrainingPlan.Day> getDaysOfWeek(TrainingPlan.TrainingWeek week) {
         return Arrays.asList(
