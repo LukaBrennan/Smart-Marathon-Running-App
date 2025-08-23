@@ -36,6 +36,9 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
+    testImplementation(libs.runner)
+    testImplementation(libs.ext.junit)
+    testImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -63,6 +66,10 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     testImplementation ("org.mockito:mockito-core:4.0.0")
     testImplementation ("org.mockito:mockito-inline:4.0.0")
+
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+
 
 
 }

@@ -1,15 +1,43 @@
 package com.example.smartmarathonrunningapp_project.utils;
 
+import android.os.Build;
 import android.util.Log;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 public class DateUtils {
     private static final String TAG = "DateUtils";
     private static final String ERROR_LOG = "failed to parse date";
+
+    public static String getCurrentIsoDateTime() {
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", java.util.Locale.getDefault());
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(new java.util.Date());
+    }
+
+    // Returns the next occurrence of the requested weekday as an ISO UTC string
+    public static String getUpcomingWeekdayIsoUtc(int calendarDayConstant) {
+        java.util.Calendar c = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"));
+        int today = c.get(java.util.Calendar.DAY_OF_WEEK);
+        int delta = (calendarDayConstant - today + 7) % 7;
+        if (delta == 0) delta = 7; // move to next week’s same day
+        c.add(java.util.Calendar.DAY_OF_YEAR, delta);
+
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault());
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(c.getTime());
+    }
+
+
 
     private DateUtils() {
         throw new IllegalStateException("Utility class - do not instantiate");
@@ -39,6 +67,16 @@ public class DateUtils {
         }
     }
 
+    public static String buildRunKey(String isoDateTime) {
+        // Produces keys like "2025-07-16 Wednesday" so determineTrafficLight(...endsWith(day)) can match
+        Date d = parseDate(isoDateTime);
+        if (d == null) return isoDateTime + " " + getDayName(isoDateTime);
+
+        java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
+        return df.format(d) + " " + getDayName(isoDateTime);
+    }
+
+
     public static String getWeekOfYear(String dateStr) {
         try {
             Date date = parseDate(dateStr);
@@ -59,31 +97,35 @@ public class DateUtils {
         }
     }
 
+    public static String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date());
+    }
+
+
+
     public static String getDayName(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) {
-            return "Unknown";
-        }
+        if (dateStr == null || dateStr.isEmpty()) return "Unknown";
 
         try {
             Date date = parseDate(dateStr);
             if (date == null) {
-                // If it's not a date string, check if it's already a day name
-                if (dateStr.equalsIgnoreCase("Monday") ||
-                        dateStr.equalsIgnoreCase("Tuesday") ||
-                        dateStr.equalsIgnoreCase("Wednesday") ||
-                        dateStr.equalsIgnoreCase("Thursday") ||
-                        dateStr.equalsIgnoreCase("Friday") ||
-                        dateStr.equalsIgnoreCase("Saturday") ||
-                        dateStr.equalsIgnoreCase("Sunday")) {
+                // If already a weekday label, accept it
+                if (dateStr.equalsIgnoreCase("Monday") || dateStr.equalsIgnoreCase("Tuesday")
+                        || dateStr.equalsIgnoreCase("Wednesday") || dateStr.equalsIgnoreCase("Thursday")
+                        || dateStr.equalsIgnoreCase("Friday") || dateStr.equalsIgnoreCase("Saturday")
+                        || dateStr.equalsIgnoreCase("Sunday")) {
                     return dateStr;
                 }
                 return "Unknown";
             }
 
-            Calendar cal = Calendar.getInstance();
+            // >>> Use UTC to avoid local-timezone day rollovers <<<
+            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
             cal.setTime(date);
 
-            switch(cal.get(Calendar.DAY_OF_WEEK)) {
+            switch (cal.get(Calendar.DAY_OF_WEEK)) {
                 case Calendar.MONDAY: return "Monday";
                 case Calendar.TUESDAY: return "Tuesday";
                 case Calendar.WEDNESDAY: return "Wednesday";
@@ -98,4 +140,14 @@ public class DateUtils {
             return "Unknown";
         }
     }
+
+
+    public static String getDateOnly(String iso) {
+        Date d = parseDate(iso);
+        if (d == null) return iso;
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return df.format(d);
+    }
+
 }

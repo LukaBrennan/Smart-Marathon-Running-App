@@ -125,8 +125,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone"
+            android:visibility="visible"
             android:padding="8dp">
+
+            <!-- NEW: Simulate Run button -->
+            <Button
+                android:id="@+id/btnSimulateRun"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Simulate Run"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/strava_orange"
+                android:textColor="@color/strava_light_text"/>
 
             <Button
                 android:id="@+id/btnTestGreen"
@@ -151,6 +161,14 @@
                 android:text="@string/test_red_scenario"
                 android:backgroundTint="@color/traffic_light_red"/>
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/trafficLightView"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:background="@color/traffic_light_green" />
 
         <Button
             android:id="@+id/feedbackButton"
