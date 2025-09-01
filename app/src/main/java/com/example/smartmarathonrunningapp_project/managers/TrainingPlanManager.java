@@ -5,70 +5,56 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import com.example.smartmarathonrunningapp_project.TrainingPlan;
 import com.google.gson.Gson;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-    //  TrainingPlanManager class manges the different training plans that can be shown, it has been changed to only show the adjusted training plan for now
-public class TrainingPlanManager
-{
-    private static final String TAG = "TrainingPlanManager";    //  TAG for logging
-    private static final String TRAINING_PREFS = "TrainingPrefs";   //
-    private static final String ADJUSTED_PLAN_KEY = "adjusted_plan";    //
-    private final Context context;  //
-    //
-    public TrainingPlanManager(Context context)
-    {
-        this.context = context;
+/*
+    Manages loading/saving training plans from assets and local storage.
+Provides two types of plans:
+    Base plan: static JSON from assets.
+    Adjusted plan: persisted JSON with athlete-specific adjustments.
+ */
+public class TrainingPlanManager {
+    private static final String TAG = "TrainingPlanManager";
+    private static final String PREFS = "TrainingPrefs";
+    private static final String KEY_ADJUSTED_PLAN = "adjusted_plan";
+    private static final String ASSET_PLAN = "TrainingPlan.json";
+    private final Context context;
+    private final SharedPreferences prefs;
+    private final Gson gson;
+
+    public TrainingPlanManager(Context context) {
+        this.context = context.getApplicationContext();
+        this.prefs = this.context.getSharedPreferences(PREFS, MODE_PRIVATE);
+        gson = new Gson();
     }
-    //
-    public TrainingPlan loadTrainingPlanFromAssets()
-    {
-        try
-        {
-            InputStream inputStream = context.getAssets().open("TrainingPlan.json");    //  Loads the static TrainingPlan from the assets folder
-            InputStreamReader reader = new InputStreamReader(inputStream);
-            Gson gson = new Gson(); //
+    //  Loads the pristine training plan from the assets folder
+    public TrainingPlan loadBasePlan() {
+        try (InputStream in = context.getAssets().open(ASSET_PLAN);
+             InputStreamReader reader = new InputStreamReader(in)) {
             return gson.fromJson(reader, TrainingPlan.class);
-        }
-        catch (IOException e)
-        {
-            Log.e(TAG, "Failed to load training plan", e);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load base plan from assets/" + ASSET_PLAN, e);
             return null;
         }
     }
-    //
-    public void saveAdjustedPlan(TrainingPlan plan)
-    {
-        try
-        {
-            SharedPreferences prefs = context.getSharedPreferences(TRAINING_PREFS, MODE_PRIVATE);   //
-            Gson gson = new Gson();
-            // Always save as adjusted plan
-            prefs.edit().putString(ADJUSTED_PLAN_KEY, gson.toJson(plan)).apply();
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "Failed to save plan", e);
+    //  Loads the adjusted TrainingPlan
+    public TrainingPlan loadAdjustedPlan() {
+        try {
+            String json = prefs.getString(KEY_ADJUSTED_PLAN, null);
+            if (json == null) return null;
+            return gson.fromJson(json, TrainingPlan.class);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load adjusted plan", e);
+            return null;
         }
     }
-    //
-    public TrainingPlan loadAdjustedPlan()
-    {
-        try
-        {
-            SharedPreferences prefs = context.getSharedPreferences(TRAINING_PREFS, MODE_PRIVATE);
-            String json = prefs.getString(ADJUSTED_PLAN_KEY, null);
-            if (json != null)
-            {
-                return new Gson().fromJson(json, TrainingPlan.class);
-            }
-            // If no adjusted plan exists, create one from the assets
-            return loadTrainingPlanFromAssets();
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "Failed to load plan", e);
-            return loadTrainingPlanFromAssets();
+    //  Adjusted TrainingPlan is saved back to SharedPreferences
+    public void saveAdjustedPlan(TrainingPlan plan) {
+        try {
+            prefs.edit().putString(KEY_ADJUSTED_PLAN, gson.toJson(plan)).apply();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save adjusted plan", e);
         }
     }
+
 }

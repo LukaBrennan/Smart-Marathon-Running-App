@@ -1,332 +1,232 @@
 package com.example.smartmarathonrunningapp_project;
-
-import android.util.Log;
-
-import com.example.smartmarathonrunningapp_project.utils.DateUtils;
 import com.google.gson.Gson;
-
+import com.example.smartmarathonrunningapp_project.utils.DateUtils;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
+/*
+    Dynamically adjusts a training plan based on past performances.
+    Uses traffic light statuses to modify future days’ pace bands.
+*/
 public class AutoAdjuster {
 
     private static final String TAG = "AutoAdjuster";
 
-    private static final float HIGH_ACUTE_TRIMP_THRESHOLD = 350f;
-    private static final float FATIGUE_RATIO_THRESHOLD    = 1.15f;
-    private static final int   DAYS_FOR_ACUTE_LOAD        = 7;
-    private static final int   DAYS_FOR_CHRONIC_LOAD      = 28;
+    private static final int RED_D1 = 12, RED_D2 = 7, RED_D3 = 3;
+    private static final int YEL_D1 = 6,  YEL_D2 = 3, YEL_D3 = 2;
+    private static final int GRN_D1 = -4, GRN_D2 = -2, GRN_D3 = 0;
 
-    private static final float RECOVERY_DISTANCE_FACTOR          = 0.8f; // -20% distance
-    private static final int   RECOVERY_PACE_ADJUSTMENT_SEC      = 30;   // +30s to all paces
+    private static final int SAME_DAY_RED   = 10;
+    private static final int SAME_DAY_YELOW = 5;
 
-    private static final float FACTOR_GREEN = 1.00f;
-    private static final float FACTOR_YELLOW = 0.90f;
-    private static final float FACTOR_RED = 0.80f;
+    private static final int DOWNGRADE_HARD_THRESHOLD = 10; // sec/km
 
-    private static final int DELTA_PACE_GREEN = -5;
-    private static final int DELTA_PACE_YELLOW = 5;
-    private static final int DELTA_PACE_RED = 10;
+    private static final double RECOVERY_DECAY = 0.60;
 
+    public TrainingPlan adjustPlan(
+            TrainingPlan base,
+            List<Activity> validActivities,
+            Map<String, String> lightsByDate
+    ) {
+        if (base == null) return null;
 
-    private static class TrainingLoadMetrics {
-        float acuteTRIMP;
-        float chronicTRIMP;
-        float fatigueRatio;
+        TrainingPlan adjusted = deepCopy(base);
+
+        applySameDayAdjustments(adjusted, lightsByDate);
+
+        applyCarryForward(adjusted, lightsByDate);
+
+        return adjusted;
     }
 
-    public TrainingPlan adjustPlan(TrainingPlan currentPlan,
-                                   List<Activity> recentRuns,
-                                   Map<String, String> trafficLightStatuses) {
-        if (currentPlan == null) return null;
-        TrainingPlan adjustedPlan = deepCopyPlan(currentPlan);
-
-        annotateDaysWithNames(adjustedPlan);
-
-        if (recentRuns == null || recentRuns.isEmpty()) return adjustedPlan;
-
-        TrainingLoadMetrics metrics = calculateTrainingLoadMetrics(recentRuns);
-        boolean needsRecovery = shouldTriggerRecovery(metrics);
-        adjustedPlan.setAdjustmentNote(createAdjustmentNote(metrics, needsRecovery));
-
-        for (TrainingPlan.TrainingWeek week : adjustedPlan.getTraining_weeks()) {
-            for (TrainingPlan.Day day : daysOf(week)) {
-                if (day == null) continue;
-
-                if (!shouldAdjustDay(day)) continue;
-
-                if (needsRecovery) {
-                    adjustForRecovery(day);
-                } else {
-                    String keyName = day.getDayOfWeek();
-                    String light = (trafficLightStatuses != null && keyName != null)
-                            ? trafficLightStatuses.get(keyName)
-                            : null;
-                    if (light != null) {
-                        adjustForTrafficLight(day, light);
-                    }
-                }
-
-                Activity match = findMatchingActivityForDay(day, recentRuns);
-                if (match != null) {
-                    adjustBasedOnFitness(match, day);
-                }
-            }
-        }
-
-        return adjustedPlan;
-    }
-
-
-    private List<TrainingPlan.Day> daysOf(TrainingPlan.TrainingWeek w) {
-        List<TrainingPlan.Day> out = new ArrayList<>(7);
-        if (w == null || w.getTraining_plan() == null) return out;
-        out.add(w.getTraining_plan().getMonday());
-        out.add(w.getTraining_plan().getTuesday());
-        out.add(w.getTraining_plan().getWednesday());
-        out.add(w.getTraining_plan().getThursday());
-        out.add(w.getTraining_plan().getFriday());
-        out.add(w.getTraining_plan().getSaturday());
-        out.add(w.getTraining_plan().getSunday());
-        return out;
-    }
-
-    private void annotateDaysWithNames(TrainingPlan plan) {
+    private void applySameDayAdjustments(TrainingPlan plan, Map<String,String> lightsByDate) {
         if (plan == null || plan.getTraining_weeks() == null) return;
-        for (TrainingPlan.TrainingWeek w : plan.getTraining_weeks()) {
-            for (TrainingPlan.Day d : daysOf(w)) {
-                if (d == null) continue;
-                if (d.getDayOfWeek() == null || d.getDayOfWeek().trim().isEmpty()) {
-                    if (d.getDate() != null) {
-                        d.setDayOfWeek(DateUtils.getDayName(d.getDate()));
-                    }
+
+        for (TrainingPlan.TrainingWeek week : plan.getTraining_weeks()) {
+            if (week == null || week.getTraining_plan() == null) continue;
+            for (TrainingPlan.Day day : getDaysOfWeek(week)) {
+                if (day == null || day.getDate() == null) continue;
+
+                if (isNoTrainingDay(day)) continue;
+
+                String key = DateUtils.getDateOnly(day.getDate());
+                String status = lightsByDate.getOrDefault(key, "N/A");
+
+                switch (safe(status)) {
+                    case "RED":
+                        bumpAllPaces(day, +SAME_DAY_RED);
+                        addNote(day, "Adjusted for fatigue (+10s).");
+                        break;
+                    case "YELLOW":
+                        bumpAllPaces(day, +SAME_DAY_YELOW);
+                        addNote(day, "Slightly easier today (+5s).");
+                        break;
+                    case "GREEN":
+                        addNote(day, "Met target.");
+                        break;
+                    default:
+                        break;
                 }
             }
         }
     }
 
 
-    private Activity findMatchingActivityForDay(TrainingPlan.Day planDay, List<Activity> runs) {
-        if (planDay == null || planDay.getDayOfWeek() == null) return null;
-        String want = planDay.getDayOfWeek();
-        return runs.stream()
-                .filter(a -> a != null && a.getStart_date() != null)
-                .filter(a -> {
-                    String have = DateUtils.getDayName(a.getStart_date());
-                    return have != null && have.equalsIgnoreCase(want);
-                })
-                .findFirst()
-                .orElse(null);
+    private void applyCarryForward(TrainingPlan plan, Map<String,String> lightsByDate) {
+        if (plan == null || plan.getTraining_weeks() == null) return;
+
+        List<TrainingPlan.Day> days = new ArrayList<>();
+        for (TrainingPlan.TrainingWeek w : plan.getTraining_weeks()) {
+            if (w == null || w.getTraining_plan() == null) continue;
+            Collections.addAll(days,
+                    w.getTraining_plan().getMonday(),
+                    w.getTraining_plan().getTuesday(),
+                    w.getTraining_plan().getWednesday(),
+                    w.getTraining_plan().getThursday(),
+                    w.getTraining_plan().getFriday(),
+                    w.getTraining_plan().getSaturday(),
+                    w.getTraining_plan().getSunday());
+        }
+        days.removeIf(d -> d == null || d.getDate() == null);
+        days.sort(Comparator.comparing(d -> DateUtils.getDateOnly(d.getDate())));
+
+        Map<String,Integer> idxByDate = new HashMap<>();
+        for (int i = 0; i < days.size(); i++) {
+            String key = DateUtils.getDateOnly(days.get(i).getDate());
+            if (key != null) idxByDate.put(key, i);
+        }
+
+        for (Map.Entry<String,String> e : lightsByDate.entrySet()) {
+            Integer i = idxByDate.get(e.getKey());
+            if (i == null) continue;
+
+            int d1 = 0, d2 = 0, d3 = 0;
+            switch (safe(e.getValue())) {
+                case "RED":    d1 = RED_D1; d2 = RED_D2; d3 = RED_D3; break;
+                case "YELLOW": d1 = YEL_D1; d2 = YEL_D2; d3 = YEL_D3; break;
+                case "GREEN":  d1 = GRN_D1; d2 = GRN_D2; d3 = GRN_D3; break;
+                default: break;
+            }
+
+            applyPaceOffsetWithRecoveryAwareDecay(days, i+1, d1);
+            applyPaceOffsetWithRecoveryAwareDecay(days, i+2, d2);
+            applyPaceOffsetWithRecoveryAwareDecay(days, i+3, d3);
+        }
+    }
+    private void applyPaceOffsetWithRecoveryAwareDecay(List<TrainingPlan.Day> days, int idx, int secondsPerKm) {
+        if (idx < 0 || idx >= days.size() || secondsPerKm == 0) return;
+
+        TrainingPlan.Day target = days.get(idx);
+        if (target == null) return;
+
+        if (isNoTrainingDay(target)) return;
+
+        boolean prevIsRecovery = false;
+        if (idx - 1 >= 0 && days.get(idx - 1) != null) {
+            String ex = safe(days.get(idx - 1).getExercise()).toLowerCase(Locale.US);
+            prevIsRecovery = ex.contains("rest") || ex.contains("recovery") || ex.contains("cross");
+        }
+
+        int applied = secondsPerKm;
+        if (prevIsRecovery) {
+            applied = (int) Math.round(applied * RECOVERY_DECAY);
+            if (applied == 0 && secondsPerKm != 0) {
+                applied = (secondsPerKm > 0) ? 1 : -1;
+            }
+        }
+        if (applied == 0) return;
+
+        if (isHardWorkout(target) && Math.abs(applied) >= DOWNGRADE_HARD_THRESHOLD && applied > 0) {
+            downgradeToAerobic(target);
+            addNote(target, "Downgraded due to fatigue (+" + applied + "s/km).");
+            bumpAllPaces(target, applied);
+        } else {
+            bumpAllPaces(target, applied);
+            if (applied > 0) {
+                addNote(target, "Carry-forward fatigue: pace +" + applied + "s/km.");
+            } else {
+                addNote(target, "Carry-forward GREEN: pace " + applied + "s/km.");
+            }
+        }
     }
 
 
-    private TrainingLoadMetrics calculateTrainingLoadMetrics(List<Activity> runs) {
-        TrainingLoadMetrics m = new TrainingLoadMetrics();
-        List<Activity> recent = filterRecentRuns(runs, DAYS_FOR_ACUTE_LOAD + DAYS_FOR_CHRONIC_LOAD);
-        m.acuteTRIMP   = calculateTRIMPForPeriod(recent, DAYS_FOR_ACUTE_LOAD);
-        m.chronicTRIMP = calculateTRIMPForPeriod(recent, DAYS_FOR_CHRONIC_LOAD);
-        m.fatigueRatio = (m.chronicTRIMP <= 0f) ? 0f : (m.acuteTRIMP / m.chronicTRIMP);
-        return m;
+    private boolean isHardWorkout(TrainingPlan.Day d) {
+        String ex = safe(d.getExercise()).toLowerCase(Locale.US);
+        return ex.contains("vo2") || ex.contains("lactate") || ex.contains("threshold")
+                || ex.contains("marathon pace") || ex.contains("interval") || ex.contains("repeat");
     }
 
-    private String createAdjustmentNote(TrainingLoadMetrics m, boolean recovery) {
-        return String.format(
-                Locale.US,
-                "Acute TRIMP: %.1f, Chronic TRIMP: %.1f, Ratio: %.2f. %s",
-                m.acuteTRIMP, m.chronicTRIMP, m.fatigueRatio,
-                recovery ? "Recovery week activated." : "Normal training load."
+    private void downgradeToAerobic(TrainingPlan.Day d) {
+        d.setExercise("General aerobic");
+    }
+
+    private void bumpAllPaces(TrainingPlan.Day d, int sec) {
+        if (isNoTrainingDay(d)) return;
+        String p = safe(d.getPace());
+        if (p.isEmpty() || "null".equalsIgnoreCase(p)) return;
+
+        String[] parts = p.split("-");
+        List<String> bumped = new ArrayList<>();
+        for (String raw : parts) {
+            String s = raw.trim();
+            String mmss = addSecondsToMmSs(s, sec);
+            bumped.add(mmss == null ? s : mmss);
+        }
+        d.setPace(String.join(" - ", bumped));
+    }
+
+    private String addSecondsToMmSs(String mmss, int add) {
+        try {
+            String[] t = mmss.split(":");
+            int m = Integer.parseInt(t[0].trim());
+            int s = Integer.parseInt(t[1].trim());
+            int total = Math.max(0, m * 60 + s + add);
+            return String.format(Locale.getDefault(), "%d:%02d", total / 60, total % 60);
+        } catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    private void addNote(TrainingPlan.Day d, String note) {
+        if (d.getAdjustmentNote() == null || d.getAdjustmentNote().isEmpty()) {
+            d.setAdjustmentNote(note);
+        } else if (!d.getAdjustmentNote().contains(note)) {
+            d.setAdjustmentNote(d.getAdjustmentNote() + " " + note);
+        }
+    }
+
+    private String safe(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    private List<TrainingPlan.Day> getDaysOfWeek(TrainingPlan.TrainingWeek week) {
+        return Arrays.asList(
+                week.getTraining_plan().getMonday(),
+                week.getTraining_plan().getTuesday(),
+                week.getTraining_plan().getWednesday(),
+                week.getTraining_plan().getThursday(),
+                week.getTraining_plan().getFriday(),
+                week.getTraining_plan().getSaturday(),
+                week.getTraining_plan().getSunday()
         );
     }
 
-    private boolean shouldTriggerRecovery(TrainingLoadMetrics m) {
-        return (m.fatigueRatio > FATIGUE_RATIO_THRESHOLD) || (m.acuteTRIMP > HIGH_ACUTE_TRIMP_THRESHOLD);
-    }
+    private static final Gson GSON = new Gson();
 
-    private float calculateTRIMPForPeriod(List<Activity> runs, int days) {
-        long cutoff = System.currentTimeMillis() - days * 24L * 60 * 60 * 1000;
-        return runs.stream()
-                .filter(a -> {
-                    if (a == null || a.getStart_date() == null) return false;
-                    Date d = DateUtils.parseDate(a.getStart_date());
-                    return d != null && d.getTime() >= cutoff;
-                })
-                .map(a -> TRIMP.calculate(
-                        a.getMoving_time() / 60f,
-                        a.getAverage_heartrate(),
-                        a.getResting_heartrate(),
-                        a.getMax_heartrate(),
-                        a.isMale()
-                ))
-                .reduce(0f, Float::sum);
-    }
-
-    private List<Activity> filterRecentRuns(List<Activity> runs, int maxDays) {
-        long cutoff = System.currentTimeMillis() - (maxDays * 24L * 60 * 60 * 1000);
-        return runs.stream()
-                .filter(run -> {
-                    if (run == null || run.getStart_date() == null) return false;
-                    Date d = DateUtils.parseDate(run.getStart_date());
-                    return d != null && d.getTime() > cutoff;
-                })
-                .collect(Collectors.toList());
-    }
-
-
-    private boolean shouldAdjustDay(TrainingPlan.Day day) {
-        if (day == null) return false;
-        String dist = day.getDistance();
-        String ex   = (day.getExercise() == null) ? "" : day.getExercise().toLowerCase(Locale.US);
-
-        boolean isRest = (dist == null) || "0 mi".equalsIgnoreCase(dist.trim());
-        boolean isRace = ex.contains("race") || ex.contains("tune-up");
-        return !isRest && !isRace;
-    }
-
-    private void adjustForRecovery(TrainingPlan.Day day) {
-        if (day.getDistance() != null && day.getDistance().contains("mi")) {
-            float dist = parseDistance(day.getDistance());
-            dist *= RECOVERY_DISTANCE_FACTOR;
-            day.setDistance(String.format(Locale.US, "%.1f mi", dist));
-        }
-        day.setPace(shiftAllPaces(day.getPace(), RECOVERY_PACE_ADJUSTMENT_SEC));
-        day.setAdjustmentNote("Recovery: distance -20%, pace +30\".");
-    }
-
-    private void adjustForTrafficLight(TrainingPlan.Day day, String status) {
-        if (day == null || status == null) return;
-
-        if (day.getDistance() != null && day.getDistance().contains("mi")) {
-            float dist  = parseDistance(day.getDistance());
-            float factor = getDistanceAdjustmentFactor(status);
-            dist *= factor;
-            day.setDistance(String.format(Locale.US, "%.1f mi", dist));
-        }
-
-        int delta = getPaceAdjustment(status);
-        if (delta != 0) {
-            day.setPace(shiftAllPaces(day.getPace(), delta));
-        }
-
-        if ("RED".equals(status)) {
-            day.setAdjustmentNote("Traffic light RED: pace +10\" and distance reduced.");
-        } else if ("YELLOW".equals(status)) {
-            day.setAdjustmentNote("Traffic light YELLOW: slight pace +5\" and distance reduced.");
-        } else if ("GREEN".equals(status)) {
-            day.setAdjustmentNote("Traffic light GREEN: pace -5\" (nice!).");
-        }
-    }
-
-
-    public void adjustBasedOnFitness(Activity activity, TrainingPlan.Day day) {
-        if (activity == null || day == null || activity.getAverage_heartrate() == 0) return;
-
-        float avgHR        = activity.getAverage_heartrate();
-        float actualPace   = activity.getPaceInSeconds();
-        float predictedPace= PerformanceEvaluator.predictPaceFromHR(avgHR);
-
-        int delta = PerformanceEvaluator.calculatePaceDelta(actualPace, predictedPace);
-        if (delta == 0) return;
-
-        day.setPace(shiftAllPaces(day.getPace(), delta));
-
-        String feedback = PerformanceEvaluator.generateFeedback(
-                actualPace,
-                predictedPace,
-                PerformanceEvaluator.getTrafficLightColor(
-                        extractRepresentativePace(day.getPace()), // baseline
-                        actualPace,
-                        parseDistance(day.getDistance()),
-                        activity.getDistance()
-                )
-        );
-        activity.setFeedback(feedback);
-    }
-
-
-    private float parseDistance(String distanceStr) {
-        try {
-            if (distanceStr == null || distanceStr.trim().isEmpty()) return 0f;
-            String s = distanceStr.toLowerCase(Locale.US);
-
-            if (s.contains("w/")) s = s.substring(0, s.indexOf("w/"));
-            s = s.replace("mi", " ").trim();
-
-            String firstNumber = s.split("-| ")[0].trim();
-            return Float.parseFloat(firstNumber);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to parse distance: " + distanceStr, e);
-            return 5.0f;
-        }
-    }
-
-    private float extractRepresentativePace(String paceStr) {
-        if (paceStr == null) return 480f; // default 8:00
-        Matcher m = MMSS.matcher(paceStr);
-        if (m.find()) {
-            return mmssToSeconds(m.group());
-        }
-        return 480f;
-    }
-
-
-    private static final Pattern MMSS = Pattern.compile("\\b(\\d{1,2}):(\\d{2})\\b");
-
-    private String shiftAllPaces(String pace, int deltaSec) {
-        if (pace == null || pace.trim().isEmpty()) return pace;
-        StringBuffer sb = new StringBuffer();
-        Matcher m = MMSS.matcher(pace);
-        while (m.find()) {
-            String original = m.group();
-            String shifted  = secondsToMmss(mmssToSeconds(original) + deltaSec);
-            m.appendReplacement(sb, Matcher.quoteReplacement(shifted));
-        }
-        m.appendTail(sb);
-        return sb.toString();
-    }
-
-    private int mmssToSeconds(String mmss) {
-        try {
-            String[] ps = mmss.split(":");
-            int m = Integer.parseInt(ps[0]);
-            int s = Integer.parseInt(ps[1]);
-            return Math.max(0, m * 60 + s);
-        } catch (Exception e) {
-            return 480; // fallback
-        }
-    }
-
-    private String secondsToMmss(int total) {
-        if (total < 0) total = 0;
-        int m = total / 60;
-        int s = total % 60;
-        return String.format(Locale.getDefault(), "%d:%02d", m, s);
-    }
-
-
-    private float getDistanceAdjustmentFactor(String status) {
-        switch (status) {
-            case "GREEN":  return FACTOR_GREEN;
-            case "YELLOW": return FACTOR_YELLOW;
-            case "RED":    return FACTOR_RED;
-            default:       return 1.0f;
-        }
-    }
-
-    private int getPaceAdjustment(String status) {
-        switch (status) {
-            case "GREEN":  return DELTA_PACE_GREEN;
-            case "YELLOW": return DELTA_PACE_YELLOW;
-            case "RED":    return DELTA_PACE_RED;
-            default:       return 0;
-        }
-    }
-
-
-    private TrainingPlan deepCopyPlan(TrainingPlan plan) {
+    private TrainingPlan deepCopy(TrainingPlan plan) {
         if (plan == null) return null;
-        Gson gson = new Gson();
-        return gson.fromJson(gson.toJson(plan), TrainingPlan.class);
+        String json = GSON.toJson(plan);
+        return GSON.fromJson(json, TrainingPlan.class);
     }
+
+    private boolean isNoTrainingDay(TrainingPlan.Day d) {
+        if (d == null) return true;
+        String ex = safe(d.getExercise()).toLowerCase(Locale.US);
+        boolean textRest = ex.contains("rest") || ex.contains("cross");
+        float meters = TrainingPlan.parseDistanceToMeters(d.getDistance());
+        return textRest || meters <= 0f;
+    }
+
+
+
 }

@@ -1,23 +1,18 @@
 package com.example.smartmarathonrunningapp_project;
-
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
-
 import android.util.Log;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 @RunWith(MockitoJUnitRunner.class)
 public class AutoAdjusterTest {
 
@@ -26,7 +21,6 @@ public class AutoAdjusterTest {
 
     @Before
     public void setUp() {
-        // Mock the static Log class
         mockedLog = mockStatic(Log.class);
         autoAdjuster = new AutoAdjuster();
     }
@@ -40,7 +34,7 @@ public class AutoAdjusterTest {
 
         TrainingPlan adjustedPlan = autoAdjuster.adjustPlan(plan, highLoadActivities, new HashMap<>());
 
-        System.out.println("Adjustment Note: " + adjustedPlan.getAdjustmentNote());  // 🔍 KEY LINE
+        System.out.println("Adjustment Note: " + adjustedPlan.getAdjustmentNote());
 
         assertNotNull(adjustedPlan);
         assertTrue(adjustedPlan.getAdjustmentNote().contains("Recovery week activated"));
@@ -65,7 +59,6 @@ public class AutoAdjusterTest {
 
         TrainingPlan.Day originalTuesday = plan.getTraining_weeks().get(0).getTraining_plan().getTuesday();
 
-        // ✅ Use the key as the day of week (e.g., "Tuesday") instead of the object
         Map<String, String> lights = new HashMap<>();
         lights.put("Tuesday", "YELLOW");
 
@@ -74,7 +67,7 @@ public class AutoAdjusterTest {
 
         System.out.println("Adjusted Tuesday pace: " + updatedTuesday.getPace());
 
-        assertNotEquals("8:00", updatedTuesday.getPace()); // it should change from original
+        assertNotEquals("8:00", updatedTuesday.getPace());
     }
 
 
@@ -127,7 +120,6 @@ public class AutoAdjusterTest {
     }
 
 
-    // Add this method to clean up after tests
     @After
     public void tearDown() {
         mockedLog.close();
@@ -182,7 +174,7 @@ public class AutoAdjusterTest {
         activity.setAverage_heartrate(avgHR);
         activity.setMax_heartrate(maxHR);
         activity.setType("Run");
-        activity.setStart_date(startDate); // this line is critical
+        activity.setStart_date(startDate);
         return activity;
     }
 }

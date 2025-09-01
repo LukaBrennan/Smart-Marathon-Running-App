@@ -3,8 +3,10 @@ plugins {
 }
 
 android {
+
     namespace = "com.example.smartmarathonrunningapp_project"
     compileSdk = 34
+
 
     defaultConfig {
         applicationId = "com.example.smartmarathonrunningapp_project"
@@ -69,6 +71,8 @@ dependencies {
 
     androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.0.4")
+
 
 
 

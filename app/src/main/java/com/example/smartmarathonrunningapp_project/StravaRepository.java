@@ -1,7 +1,6 @@
 package com.example.smartmarathonrunningapp_project;
 import android.util.Log;
 import androidx.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
